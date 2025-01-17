@@ -437,4 +437,34 @@ describe("options", () => {
         });
     });
 
+    describe("--stats", () => {
+        it("should return true --stats is passed", () => {
+            const currentOptions = flatOptions.parse("--stats");
+
+            assert.isTrue(currentOptions.stats);
+        });
+    });
+
+    describe("--inspect-config", () => {
+        it("should return true when --inspect-config is passed", () => {
+            const currentOptions = flatOptions.parse("--inspect-config");
+
+            assert.isTrue(currentOptions.inspectConfig);
+        });
+    });
+
+    describe("--flag", () => {
+        it("should return single-item array when --flag is passed once", () => {
+            const currentOptions = flatOptions.parse("--flag x_feature");
+
+            assert.deepStrictEqual(currentOptions.flag, ["x_feature"]);
+        });
+
+        it("should return multi-item array when --flag is passed multiple times", () => {
+            const currentOptions = flatOptions.parse("--flag x_feature --flag y_feature");
+
+            assert.deepStrictEqual(currentOptions.flag, ["x_feature", "y_feature"]);
+        });
+    });
+
 });

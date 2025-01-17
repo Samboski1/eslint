@@ -12,7 +12,7 @@ related_rules:
 Very short identifier names like `e`, `x`, `_t` or very long ones like `hashGeneratorResultOutputContainerObject` can make code harder to read and potentially less maintainable. To prevent this, one may enforce a minimum and/or maximum identifier length.
 
 ```js
-var x = 5; // too short; difficult to understand its purpose without context
+const x = 5; // too short; difficult to understand its purpose without context
 ```
 
 ## Rule Details
@@ -29,17 +29,16 @@ Examples of **incorrect** code for this rule with the default options:
 
 ```js
 /*eslint id-length: "error"*/     // default is minimum 2-chars ({ "min": 2 })
-/*eslint-env es6*/
 
-var x = 5;
+const x = 5;
 obj.e = document.body;
-var foo = function (e) { };
+const foo = function (e) { };
 try {
     dangerousStuff();
 } catch (e) {
     // ignore as many do
 }
-var myObj = { a: 1 };
+const myObj = { a: 1 };
 (a) => { a * a };
 class y { }
 class Foo { x() {} }
@@ -48,11 +47,11 @@ class Baz { x = 1 }
 class Qux { #x = 1 }
 function bar(...x) { }
 function baz([x]) { }
-var [x] = arr;
-var { prop: [x]} = {};
+const [z] = arr;
+const { prop: [i]} = {};
 function qux({x}) { }
-var { x } = {};
-var { prop: a} = {};
+const { j } = {};
+const { prop: a} = {};
 ({ prop: obj.x } = {});
 ```
 
@@ -64,19 +63,18 @@ Examples of **correct** code for this rule with the default options:
 
 ```js
 /*eslint id-length: "error"*/     // default is minimum 2-chars ({ "min": 2 })
-/*eslint-env es6*/
 
-var num = 5;
+const num = 5;
 function _f() { return 42; }
 function _func() { return 42; }
 obj.el = document.body;
-var foo = function (evt) { /* do stuff */ };
+const foo = function (evt) { /* do stuff */ };
 try {
     dangerousStuff();
 } catch (error) {
     // ignore as many do
 }
-var myObj = { apple: 1 };
+const myObj = { apple: 1 };
 (num) => { num * num };
 function bar(num = 0) { }
 class MyClass { }
@@ -86,15 +84,14 @@ class Baz { field = 1 }
 class Qux { #field = 1 }
 function baz(...args) { }
 function qux([longName]) { }
-var { prop } = {};
-var { prop: [longName] } = {};
-var [longName] = arr;
+const { prop } = {};
+const { prop: [name] } = {};
+const [longName] = arr;
 function foobar({ prop }) { }
 function foobaz({ a: prop }) { }
-var { prop } = {};
-var { a: prop } = {};
+const { a: property } = {};
 ({ prop: obj.longName } = {});
-var data = { "x": 1 };  // excused because of quotes
+const data = { "x": 1 };  // excused because of quotes
 data["y"] = 3;  // excused because of calculated property access
 ```
 
@@ -102,8 +99,8 @@ data["y"] = 3;  // excused because of calculated property access
 
 This rule has an object option:
 
-* `"min"` (default: 2) enforces a minimum identifier length
-* `"max"` (default: Infinity) enforces a maximum identifier length
+* `"min"` (default: `2`) enforces a minimum identifier length
+* `"max"` (default: `Infinity`) enforces a maximum identifier length
 * `"properties": always` (default) enforces identifier length convention for property names
 * `"properties": never` ignores identifier length convention for property names
 * `"exceptions"` allows an array of specified identifier names
@@ -117,9 +114,8 @@ Examples of **incorrect** code for this rule with the `{ "min": 4 }` option:
 
 ```js
 /*eslint id-length: ["error", { "min": 4 }]*/
-/*eslint-env es6*/
 
-var val = 5;
+const val = 5;
 obj.e = document.body;
 function foo (e) { };
 try {
@@ -127,15 +123,15 @@ try {
 } catch (e) {
     // ignore as many do
 }
-var myObj = { a: 1 };
+const myObj = { a: 1 };
 (val) => { val * val };
 class y { }
 class Foo { x() {} }
 function bar(...x) { }
-var { x } = {};
-var { prop: a} = {};
-var [x] = arr;
-var { prop: [x]} = {};
+const { x } = {};
+const { prop: a} = {};
+const [i] = arr;
+const { prop: [num]} = {};
 ({ prop: obj.x } = {});
 ```
 
@@ -147,29 +143,28 @@ Examples of **correct** code for this rule with the `{ "min": 4 }` option:
 
 ```js
 /*eslint id-length: ["error", { "min": 4 }]*/
-/*eslint-env es6*/
 
-var value = 5;
+const value = 5;
 function func() { return 42; }
 object.element = document.body;
-var foobar = function (event) { /* do stuff */ };
+const foobar = function (event) { /* do stuff */ };
 try {
     dangerousStuff();
 } catch (error) {
     // ignore as many do
 }
-var myObj = { apple: 1 };
+const myObj = { apple: 1 };
 (value) => { value * value };
 function foobaz(value = 0) { }
 class MyClass { }
 class Foobar { method() {} }
 function barbaz(...args) { }
-var { prop } = {};
-var [longName] = foo;
-var { a: [prop] } = {};
-var { a: longName } = {};
+const { prop } = {};
+const [longName] = foo;
+const { a: [name] } = {};
+const { a: record } = {};
 ({ prop: object.name } = {});
-var data = { "x": 1 };  // excused because of quotes
+const data = { "x": 1 };  // excused because of quotes
 data["y"] = 3;  // excused because of calculated property access
 ```
 
@@ -183,19 +178,18 @@ Examples of **incorrect** code for this rule with the `{ "max": 10 }` option:
 
 ```js
 /*eslint id-length: ["error", { "max": 10 }]*/
-/*eslint-env es6*/
 
-var reallyLongVarName = 5;
+const reallyLongVarName = 5;
 function reallyLongFuncName() { return 42; }
 obj.reallyLongPropName = document.body;
-var foo = function (reallyLongArgName) { /* do stuff */ };
+const foo = function (reallyLongArgName) { /* do stuff */ };
 try {
     dangerousStuff();
 } catch (reallyLongErrorName) {
     // ignore as many do
 }
 (reallyLongArgName) => { return !reallyLongArgName; };
-var [reallyLongFirstElementName] = arr;
+const [reallyLongFirstElementName] = arr;
 ```
 
 :::
@@ -206,19 +200,18 @@ Examples of **correct** code for this rule with the `{ "max": 10 }` option:
 
 ```js
 /*eslint id-length: ["error", { "max": 10 }]*/
-/*eslint-env es6*/
 
-var varName = 5;
+const varName = 5;
 function funcName() { return 42; }
 obj.propName = document.body;
-var foo = function (arg) { /* do stuff */ };
+const foo = function (arg) { /* do stuff */ };
 try {
     dangerousStuff();
 } catch (error) {
     // ignore as many do
 }
 (arg) => { return !arg; };
-var [first] = arr;
+const [first] = arr;
 ```
 
 :::
@@ -231,9 +224,8 @@ Examples of **correct** code for this rule with the `{ "properties": "never" }` 
 
 ```js
 /*eslint id-length: ["error", { "properties": "never" }]*/
-/*eslint-env es6*/
 
-var myObj = { a: 1 };
+const myObj = { a: 1 };
 ({ a: obj.x.y.z } = {});
 ({ prop: obj.i } = {});
 ```
@@ -247,20 +239,19 @@ Examples of additional **correct** code for this rule with the `{ "exceptions": 
 ::: correct
 
 ```js
-/*eslint id-length: ["error", { "exceptions": ["x", "y", "z", "ζ"] }]*/
-/*eslint-env es6*/
+/*eslint id-length: ["error", { "exceptions": ["x", "y", "z", "ζ", "i"] }]*/
 
-var x = 5;
+const x = 5;
 function y() { return 42; }
 obj.x = document.body;
-var foo = function (x) { /* do stuff */ };
+const foo = function (x) { /* do stuff */ };
 try {
     dangerousStuff();
 } catch (x) {
     // ignore as many do
 }
 (x) => { return x * x; };
-var [x] = arr;
+const [i] = arr;
 const { z } = foo;
 const { a: ζ } = foo;
 ```
@@ -274,20 +265,19 @@ Examples of additional **correct** code for this rule with the `{ "exceptionPatt
 ::: correct
 
 ```js
-/*eslint id-length: ["error", { "exceptionPatterns": ["E|S", "[x-z]"] }]*/
-/*eslint-env es6*/
+/*eslint id-length: ["error", { "exceptionPatterns": ["E|S|X", "[x-z]"] }]*/
 
-var E = 5;
+const E = 5;
 function S() { return 42; }
 obj.x = document.body;
-var foo = function (x) { /* do stuff */ };
+const foo = function (x) { /* do stuff */ };
 try {
     dangerousStuff();
 } catch (x) {
     // ignore as many do
 }
 (y) => {return  y * y};
-var [E] = arr;
+const [X] = arr;
 const { y } = foo;
 const { a: z } = foo;
 ```

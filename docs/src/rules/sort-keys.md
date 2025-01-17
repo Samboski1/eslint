@@ -19,7 +19,6 @@ Examples of **incorrect** code for this rule:
 
 ```js
 /*eslint sort-keys: "error"*/
-/*eslint-env es6*/
 
 let obj1 = {a: 1, c: 3, b: 2};
 let obj2 = {a: 1, "c": 3, b: 2};
@@ -45,7 +44,6 @@ Examples of **correct** code for this rule:
 
 ```js
 /*eslint sort-keys: "error"*/
-/*eslint-env es6*/
 
 let obj1 = {a: 1, b: 2, c: 3};
 let obj2 = {a: 1, "b": 2, c: 3};
@@ -85,12 +83,13 @@ The 1st option is `"asc"` or `"desc"`.
 * `"asc"` (default) - enforce properties to be in ascending order.
 * `"desc"` - enforce properties to be in descending order.
 
-The 2nd option is an object which has 3 properties.
+The 2nd option is an object which has the following properties.
 
 * `caseSensitive` - if `true`, enforce properties to be in case-sensitive order. Default is `true`.
 * `minKeys` - Specifies the minimum number of keys that an object should have in order for the object's unsorted keys to produce an error. Default is `2`, which means by default all objects with unsorted keys will result in lint errors.
 * `natural` - if `true`, enforce properties to be in natural order. Default is `false`. Natural Order compares strings containing combination of letters and numbers in the way a human being would sort. It basically sorts numerically, instead of sorting alphabetically. So the number 10 comes after the number 3 in Natural Sorting.
 * `allowLineSeparatedGroups` - if `true`, the rule allows to group object keys through line breaks. In other words, a blank line after a property will reset the sorting of keys. Default is `false`.
+* `ignoreComputedKeys` - if `true`, the rule ignores all computed keys and doesn't report unsorted properties separated by them. A computed key will reset the sorting of the following non-computed keys. Default is `false`.
 
 Example for a list:
 
@@ -116,7 +115,6 @@ Examples of **incorrect** code for the `"desc"` option:
 
 ```js
 /*eslint sort-keys: ["error", "desc"]*/
-/*eslint-env es6*/
 
 let obj1 = {b: 2, c: 3, a: 1};
 let obj2 = {"b": 2, c: 3, a: 1};
@@ -136,7 +134,6 @@ Examples of **correct** code for the `"desc"` option:
 
 ```js
 /*eslint sort-keys: ["error", "desc"]*/
-/*eslint-env es6*/
 
 let obj1 = {c: 3, b: 2, a: 1};
 let obj2 = {c: 3, "b": 2, a: 1};
@@ -150,7 +147,7 @@ let obj4 = {2: c, 10: b, 1: a};
 
 :::
 
-### insensitive
+### caseSensitive
 
 Examples of **incorrect** code for the `{caseSensitive: false}` option:
 
@@ -158,7 +155,6 @@ Examples of **incorrect** code for the `{caseSensitive: false}` option:
 
 ```js
 /*eslint sort-keys: ["error", "asc", {caseSensitive: false}]*/
-/*eslint-env es6*/
 
 let obj1 = {a: 1, c: 3, C: 4, b: 2};
 let obj2 = {a: 1, C: 3, c: 4, b: 2};
@@ -172,7 +168,6 @@ Examples of **correct** code for the `{caseSensitive: false}` option:
 
 ```js
 /*eslint sort-keys: ["error", "asc", {caseSensitive: false}]*/
-/*eslint-env es6*/
 
 let obj1 = {a: 1, b: 2, c: 3, C: 4};
 let obj2 = {a: 1, b: 2, C: 3, c: 4};
@@ -188,7 +183,6 @@ Examples of **incorrect** code for the `{natural: true}` option:
 
 ```js
 /*eslint sort-keys: ["error", "asc", {natural: true}]*/
-/*eslint-env es6*/
 
 let obj = {1: a, 10: c, 2: b};
 ```
@@ -201,7 +195,6 @@ Examples of **correct** code for the `{natural: true}` option:
 
 ```js
 /*eslint sort-keys: ["error", "asc", {natural: true}]*/
-/*eslint-env es6*/
 
 let obj = {1: a, 2: b, 10: c};
 ```
@@ -216,7 +209,6 @@ Examples of **incorrect** code for the `{minKeys: 4}` option:
 
 ```js
 /*eslint sort-keys: ["error", "asc", {minKeys: 4}]*/
-/*eslint-env es6*/
 
 // 4 keys
 let obj1 = {
@@ -244,7 +236,6 @@ Examples of **correct** code for the `{minKeys: 4}` option:
 
 ```js
 /*eslint sort-keys: ["error", "asc", {minKeys: 4}]*/
-/*eslint-env es6*/
 
 // 3 keys
 let obj1 = {
@@ -270,7 +261,6 @@ Examples of **incorrect** code for the `{allowLineSeparatedGroups: true}` option
 
 ```js
 /*eslint sort-keys: ["error", "asc", {allowLineSeparatedGroups: true}]*/
-/*eslint-env es6*/
 
 let obj1 = {
     b: 1,
@@ -316,7 +306,6 @@ Examples of **correct** code for the `{allowLineSeparatedGroups: true}` option:
 
 ```js
 /*eslint sort-keys: ["error", "asc", {allowLineSeparatedGroups: true}]*/
-/*eslint-env es6*/
 
 let obj1 = {
     e: 1,
@@ -342,7 +331,7 @@ let obj3 = {
 
     b () {
 
-    }, 
+    },
     e: 3,
 }
 
@@ -379,6 +368,35 @@ var obj7 = {
     a: 2,
     ...z,
     c: 3
+}
+```
+
+:::
+
+### ignoreComputedKeys
+
+Examples of **correct** code for the `{ignoreComputedKeys: true}` option:
+
+::: correct
+
+```js
+/*eslint sort-keys: ["error", "asc", {ignoreComputedKeys: true}]*/
+
+let obj1 = {
+    [b]: 1,
+    a: 2
+}
+
+let obj2 = {
+    c: 1,
+    [b]: 2,
+    a: 3
+}
+
+let obj3 = {
+    c: 1,
+    ["b"]: 2,
+    a: 3
 }
 ```
 

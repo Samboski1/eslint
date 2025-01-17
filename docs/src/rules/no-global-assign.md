@@ -23,8 +23,7 @@ This rule disallows modifications to read-only global variables.
 
 ESLint has the capability to configure global variables as read-only.
 
-* [Specifying Environments](../use/configure#specifying-environments)
-* [Specifying Globals](../use/configure#specifying-globals)
+See also: [Specifying Globals](../use/configure#specifying-globals)
 
 Examples of **incorrect** code for this rule:
 
@@ -43,22 +42,9 @@ undefined = 1
 
 ```js
 /*eslint no-global-assign: "error"*/
-/*eslint-env browser*/
+/*global window:readonly*/
 
 window = {}
-length = 1
-top = 1
-```
-
-:::
-
-::: incorrect
-
-```js
-/*eslint no-global-assign: "error"*/
-/*global a:readonly*/
-
-a = 1
 ```
 
 :::
@@ -81,20 +67,9 @@ b = 2
 
 ```js
 /*eslint no-global-assign: "error"*/
-/*eslint-env browser*/
+/*global onload:writable*/
 
 onload = function() {}
-```
-
-:::
-
-::: correct
-
-```js
-/*eslint no-global-assign: "error"*/
-/*global a:writable*/
-
-a = 1
 ```
 
 :::

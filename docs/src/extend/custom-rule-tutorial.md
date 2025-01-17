@@ -6,6 +6,10 @@ eleventyNavigation:
     title: Custom Rule Tutorial
     order: 1
 ---
+
+{%- from 'components/npm_tabs.macro.html' import npm_tabs with context %}
+{%- from 'components/npx_tabs.macro.html' import npx_tabs %}
+
 This tutorial covers how to create a custom rule for ESLint and distribute it with a plugin.
 
 You can create custom rules to validate if your code meets a certain expectation, and determine what to do if it does not meet that expectation. Plugins package custom rules and other configuration, allowing you to easily share and reuse them in different projects.
@@ -113,6 +117,10 @@ To learn more about rule metadata, refer to [Rule Structure](custom-rules#rule-s
 Define the rule's `create` function, which accepts a `context` object and returns an object with a property for each syntax node type you want to handle. In this case, you want to handle `VariableDeclarator` nodes.
 You can choose any [ESTree node type](https://github.com/estree/estree) or [selector](selectors).
 
+::: tip
+You can view the AST for any JavaScript code using [Code Explorer](http://explorer.eslint.org). This is helpful in determining the type of nodes you'd like to target.
+:::
+
 Inside the `VariableDeclarator` visitor method, check if the node represents a `const` variable declaration, if its name is `foo`, and if it's not assigned to the string `"bar"`. You do this by evaluating the `node` passed to the `VariableDeclaration` method.
 
 If the `const foo` declaration is assigned a value of `"bar"`, then the rule does nothing. If `const foo` **is not** assigned a value of `"bar"`, then `context.report()` reports an error to ESLint. The error report includes information about the error and how to fix it.
@@ -185,9 +193,11 @@ touch enforce-foo-bar.test.js
 
 You will use the `eslint` package in the test file. Install it as a development dependency:
 
-```shell
-npm install eslint --save-dev
-```
+{{ npm_tabs({
+    command: "install",
+    packages: ["eslint"],
+    args: ["--save-dev"]
+}) }}
 
 And add a test script to your `package.json` file to run the tests:
 
@@ -217,7 +227,7 @@ const fooBarRule = require("./enforce-foo-bar");
 const ruleTester = new RuleTester({
   // Must use at least ecmaVersion 2015 because
   // that's when `const` variables were introduced.
-  parserOptions: { ecmaVersion: 2015 }
+  languageOptions: { ecmaVersion: 2015 }
 });
 
 // Throws error if the tests in ruleTester.run() do not pass
@@ -341,9 +351,10 @@ Now you're ready to test the custom rule with the locally defined plugin.
 
 Run ESLint on `example.js`:
 
-```shell
-npx eslint example.js
-```
+{{ npx_tabs({
+    package: "eslint",
+    args: ["example.js"]
+}) }}
 
 This produces the following output in the terminal:
 
@@ -362,7 +373,7 @@ To publish a plugin containing a rule to npm, you need to configure the `package
 1. `"name"`: A unique name for the package. No other package on npm can have the same name.
 1. `"main"`: The relative path to the plugin file. Following this example, the path is `"eslint-plugin-example.js"`.
 1. `"description"`: A description of the package that's viewable on npm.
-1. `"peerDependencies"`: Add `"eslint": ">=8.0.0"` as a peer dependency. Any version greater than or equal to that is necessary to use the plugin. Declaring `eslint` as a peer dependency requires that users add the package to the project separately from the plugin.
+1. `"peerDependencies"`: Add `"eslint": ">=9.0.0"` as a peer dependency. Any version greater than or equal to that is necessary to use the plugin. Declaring `eslint` as a peer dependency requires that users add the package to the project separately from the plugin.
 1. `"keywords"`: Include the standard keywords `["eslint", "eslintplugin", "eslint-plugin"]` to make the package easy to find. You can add any other keywords that might be relevant to your plugin as well.
 
 A complete annotated example of what a plugin's `package.json` file should look like:
@@ -379,9 +390,9 @@ A complete annotated example of what a plugin's `package.json` file should look 
   "scripts": {
     "test": "node enforce-foo-bar.test.js"
   },
-  // Add eslint>=8.0.0 as a peer dependency.
+  // Add eslint>=9.0.0 as a peer dependency.
   "peerDependencies": {
-    "eslint": ">=8.0.0"
+    "eslint": ">=9.0.0"
   },
   // Add these standard keywords to make plugin easy to find!
   "keywords": [
@@ -392,7 +403,7 @@ A complete annotated example of what a plugin's `package.json` file should look 
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "eslint": "^8.36.0"
+    "eslint": "^9.0.0"
   }
 }
 ```
@@ -407,9 +418,12 @@ Next, you can use the published plugin.
 
 Run the following command in your project to download the package:
 
-```shell
-npm install --save-dev eslint-plugin-example # Add your package name here
-```
+{{ npm_tabs({
+    command: "install",
+    packages: ["eslint-plugin-example"],
+    args: ["--save-dev"],
+    comment: "Add your package name here"
+}) }}
 
 Update the `eslint.config.js` to use the packaged version of the plugin:
 
@@ -427,9 +441,10 @@ Now you're ready to test the custom rule.
 
 Run ESLint on the `example.js` file you created in step 8, now with the downloaded plugin:
 
-```shell
-npx eslint example.js
-```
+{{ npx_tabs({
+    package: "eslint",
+    args: ["example.js"]
+}) }}
 
 This produces the following output in the terminal:
 
@@ -445,9 +460,10 @@ As you can see in the above message, you can actually fix the issue with the `--
 
 Run ESLint again with the `--fix` flag:
 
-```shell
-npx eslint example.js --fix
-```
+{{ npx_tabs({
+    package: "eslint",
+    args: ["example.js", "--fix"]
+}) }}
 
 There is no error output in the terminal when you run this, but you can see the fix applied in `example.js`. You should see the following:
 

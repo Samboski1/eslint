@@ -58,11 +58,10 @@ if (foo) {
 
 Examples of **correct** code for this rule with the default `{ "before": true }` option:
 
-::: correct { "ecmaFeatures": { "jsx": true } }
+::: correct { "parserOptions": { "ecmaFeatures": { "jsx": true } } }
 
 ```jsx
 /*eslint keyword-spacing: ["error", { "before": true }]*/
-/*eslint-env es6*/
 
 if (foo) {
     //...
@@ -173,7 +172,7 @@ if(foo) {
 
 Examples of **correct** code for this rule with the default `{ "after": true }` option:
 
-::: correct { "ecmaFeatures": { "jsx": true } }
+::: correct { "parserOptions": { "ecmaFeatures": { "jsx": true } } }
 
 ```jsx
 /*eslint keyword-spacing: ["error", { "after": true }]*/

@@ -8,9 +8,9 @@
 // Requirements
 //------------------------------------------------------------------------------
 
-const fs = require("fs");
-const path = require("path");
-const os = require("os");
+const fs = require("node:fs");
+const path = require("node:path");
+const os = require("node:os");
 const { assert } = require("chai");
 const sh = require("shelljs");
 const sinon = require("sinon");
@@ -457,13 +457,11 @@ describe("FileEnumerator", () => {
                 });
 
                 it("should throw an error if no files match a glob", () => {
-
-                    // Relying here on the .eslintignore from the repo root
-                    const patterns = ["tests/fixtures/glob-util/ignored/**/*.js"];
+                    const patterns = ["dir-does-not-exist/**/*.js"];
 
                     assert.throws(() => {
-                        listFiles(patterns);
-                    }, `All files matched by '${patterns[0]}' are ignored.`);
+                        listFiles(patterns, { cwd: getFixturePath("ignored-paths") });
+                    }, `No files matching '${patterns[0]}' were found.`);
                 });
 
                 it("should return an ignored file, if ignore option is turned off", () => {

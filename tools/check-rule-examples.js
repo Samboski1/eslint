@@ -5,14 +5,15 @@
 //------------------------------------------------------------------------------
 
 const { parse } = require("espree");
-const { readFile } = require("fs").promises;
+const { readFile } = require("node:fs").promises;
 const { glob } = require("glob");
 const matter = require("gray-matter");
 const markdownIt = require("markdown-it");
 const markdownItContainer = require("markdown-it-container");
 const markdownItRuleExample = require("../docs/tools/markdown-it-rule-example");
-const ConfigCommentParser = require("../lib/linter/config-comment-parser");
+const { ConfigCommentParser } = require("@eslint/plugin-kit");
 const rules = require("../lib/rules");
+const { LATEST_ECMA_VERSION } = require("../conf/ecma-version");
 
 //------------------------------------------------------------------------------
 // Typedefs
@@ -20,7 +21,7 @@ const rules = require("../lib/rules");
 
 /** @typedef {import("../lib/shared/types").LintMessage} LintMessage */
 /** @typedef {import("../lib/shared/types").LintResult} LintResult */
-/** @typedef {import("../lib/shared/types").ParserOptions} ParserOptions */
+/** @typedef {import("../lib/shared/types").LanguageOptions} LanguageOptions */
 
 //------------------------------------------------------------------------------
 // Helpers
@@ -28,17 +29,29 @@ const rules = require("../lib/rules");
 
 const STANDARD_LANGUAGE_TAGS = new Set(["javascript", "js", "jsx"]);
 
+const VALID_ECMA_VERSIONS = new Set([
+    3,
+    5,
+    ...Array.from({ length: LATEST_ECMA_VERSION - 2015 + 1 }, (_, index) => index + 2015) // 2015, 2016, ..., LATEST_ECMA_VERSION
+]);
+
 const commentParser = new ConfigCommentParser();
 
 /**
  * Tries to parse a specified JavaScript code with Playground presets.
  * @param {string} code The JavaScript code to parse.
- * @param {ParserOptions} parserOptions Explicitly specified parser options.
+ * @param {LanguageOptions} [languageOptions] Explicitly specified language options.
  * @returns {{ ast: ASTNode } | { error: SyntaxError }} An AST with comments, or a `SyntaxError` object if the code cannot be parsed.
  */
-function tryParseForPlayground(code, parserOptions) {
+function tryParseForPlayground(code, languageOptions) {
     try {
-        const ast = parse(code, { ecmaVersion: "latest", ...parserOptions, comment: true });
+        const ast = parse(code, {
+            ecmaVersion: languageOptions?.ecmaVersion ?? "latest",
+            sourceType: languageOptions?.sourceType ?? "module",
+            ...languageOptions?.parserOptions,
+            comment: true,
+            loc: true
+        });
 
         return { ast };
     } catch (error) {
@@ -57,7 +70,7 @@ async function findProblems(filename) {
     const isRuleRemoved = !rules.has(title);
     const problems = [];
     const ruleExampleOptions = markdownItRuleExample({
-        open({ code, parserOptions, codeBlockToken }) {
+        open({ code, languageOptions, codeBlockToken }) {
             const languageTag = codeBlockToken.info;
 
             if (!STANDARD_LANGUAGE_TAGS.has(languageTag)) {
@@ -79,22 +92,76 @@ async function findProblems(filename) {
                 });
             }
 
-            const { ast, error } = tryParseForPlayground(code, parserOptions);
+            if (typeof languageOptions?.ecmaVersion !== "undefined") {
+                const { ecmaVersion } = languageOptions;
+                let ecmaVersionErrorMessage;
 
-            if (ast && !isRuleRemoved) {
-                const hasRuleConfigComment = ast.comments.some(
-                    comment => {
-                        if (comment.type !== "Block" || !/^\s*eslint(?!\S)/u.test(comment.value)) {
-                            return false;
-                        }
-                        const { directiveValue } = commentParser.parseDirective(comment);
-                        const parseResult = commentParser.parseJsonConfig(directiveValue, comment.loc);
+                if (ecmaVersion === "latest") {
+                    ecmaVersionErrorMessage = 'Remove unnecessary "ecmaVersion":"latest".';
+                } else if (typeof ecmaVersion !== "number") {
+                    ecmaVersionErrorMessage = '"ecmaVersion" must be a number.';
+                } else if (!VALID_ECMA_VERSIONS.has(ecmaVersion)) {
+                    ecmaVersionErrorMessage = `"ecmaVersion" must be one of ${[...VALID_ECMA_VERSIONS].join(", ")}.`;
+                }
 
-                        return parseResult.success && Object.hasOwn(parseResult.config, title);
+                if (ecmaVersionErrorMessage) {
+                    problems.push({
+                        fatal: false,
+                        severity: 2,
+                        message: ecmaVersionErrorMessage,
+                        line: codeBlockToken.map[0] - 1,
+                        column: 1
+                    });
+                }
+            }
+
+            const { ast, error } = tryParseForPlayground(code, languageOptions);
+
+            if (ast) {
+                let hasRuleConfigComment = false;
+
+                for (const comment of ast.comments) {
+
+                    if (comment.type === "Block" && /^\s*eslint-env(?!\S)/u.test(comment.value)) {
+                        problems.push({
+                            fatal: false,
+                            severity: 2,
+                            message: "/* eslint-env */ comments are no longer supported. Remove the comment.",
+                            line: codeBlockToken.map[0] + 1 + comment.loc.start.line,
+                            column: comment.loc.start.column + 1
+                        });
                     }
-                );
 
-                if (!hasRuleConfigComment) {
+                    if (comment.type !== "Block" || !/^\s*eslint(?!\S)/u.test(comment.value)) {
+                        continue;
+                    }
+                    const { value } = commentParser.parseDirective(comment.value);
+                    const parseResult = commentParser.parseJSONLikeConfig(value);
+                    const parseError = parseResult.error;
+
+                    if (parseError) {
+                        problems.push({
+                            fatal: true,
+                            severity: 2,
+                            message: parseError.message,
+                            line: comment.loc.start.line + codeBlockToken.map[0] + 1,
+                            column: comment.loc.start.column + 1
+                        });
+                    } else if (Object.hasOwn(parseResult.config, title)) {
+                        if (hasRuleConfigComment) {
+                            problems.push({
+                                fatal: false,
+                                severity: 2,
+                                message: `Duplicate /* eslint ${title} */ configuration comment. Each example should contain only one. Split this example into multiple examples.`,
+                                line: codeBlockToken.map[0] + 1 + comment.loc.start.line,
+                                column: comment.loc.start.column + 1
+                            });
+                        }
+                        hasRuleConfigComment = true;
+                    }
+                }
+
+                if (!isRuleRemoved && !hasRuleConfigComment) {
                     const message = `Example code should contain a configuration comment like /* eslint ${title}: "error" */`;
 
                     problems.push({

@@ -4,7 +4,7 @@ eleventyNavigation:
     key: formatters
     parent: use eslint
     title: Formatters Reference
-    order: 6
+    order: 7
 edit_link: https://github.com/eslint/eslint/edit/main/templates/formatter-examples.md.ejs
 ---
 
@@ -89,7 +89,23 @@ Example output (formatted for easier reading):
                     "nodeType": "Identifier",
                     "messageId": "unusedVar",
                     "endLine": 1,
-                    "endColumn": 16
+                    "endColumn": 16,
+                    "suggestions": [
+                        {
+                            "messageId": "removeVar",
+                            "data": {
+                                "varName": "addOne"
+                            },
+                            "fix": {
+                                "range": [
+                                    0,
+                                    94
+                                ],
+                                "text": ""
+                            },
+                            "desc": "Remove unused variable 'addOne'."
+                        }
+                    ]
                 },
                 {
                     "ruleId": "use-isnan",
@@ -100,7 +116,31 @@ Example output (formatted for easier reading):
                     "nodeType": "BinaryExpression",
                     "messageId": "comparisonWithNaN",
                     "endLine": 2,
-                    "endColumn": 17
+                    "endColumn": 17,
+                    "suggestions": [
+                        {
+                            "messageId": "replaceWithIsNaN",
+                            "fix": {
+                                "range": [
+                                    29,
+                                    37
+                                ],
+                                "text": "!Number.isNaN(i)"
+                            },
+                            "desc": "Replace with Number.isNaN."
+                        },
+                        {
+                            "messageId": "replaceWithCastingAndIsNaN",
+                            "fix": {
+                                "range": [
+                                    29,
+                                    37
+                                ],
+                                "text": "!Number.isNaN(Number(i))"
+                            },
+                            "desc": "Replace with Number.isNaN and cast to a Number."
+                        }
+                    ]
                 },
                 {
                     "ruleId": "space-unary-ops",
@@ -217,9 +257,15 @@ Example output (formatted for easier reading):
         "rulesMeta": {
             "no-else-return": {
                 "type": "suggestion",
+                "defaultOptions": [
+                    {
+                        "allowElseIf": true
+                    }
+                ],
                 "docs": {
                     "description": "Disallow `else` blocks after `return` statements in `if` statements",
                     "recommended": false,
+                    "frozen": true,
                     "url": "https://eslint.org/docs/latest/rules/no-else-return"
                 },
                 "schema": [
@@ -227,8 +273,7 @@ Example output (formatted for easier reading):
                         "type": "object",
                         "properties": {
                             "allowElseIf": {
-                                "type": "boolean",
-                                "default": true
+                                "type": "boolean"
                             }
                         },
                         "additionalProperties": false
@@ -633,11 +678,15 @@ Example output (formatted for easier reading):
                         "type": "object",
                         "properties": {
                             "treatUndefinedAsUnspecified": {
-                                "type": "boolean",
-                                "default": false
+                                "type": "boolean"
                             }
                         },
                         "additionalProperties": false
+                    }
+                ],
+                "defaultOptions": [
+                    {
+                        "treatUndefinedAsUnspecified": false
                     }
                 ],
                 "messages": {
@@ -673,7 +722,23 @@ Example output (formatted for easier reading):
                 "nodeType": "Identifier",
                 "messageId": "unusedVar",
                 "endLine": 1,
-                "endColumn": 16
+                "endColumn": 16,
+                "suggestions": [
+                    {
+                        "messageId": "removeVar",
+                        "data": {
+                            "varName": "addOne"
+                        },
+                        "fix": {
+                            "range": [
+                                0,
+                                94
+                            ],
+                            "text": ""
+                        },
+                        "desc": "Remove unused variable 'addOne'."
+                    }
+                ]
             },
             {
                 "ruleId": "use-isnan",
@@ -684,7 +749,31 @@ Example output (formatted for easier reading):
                 "nodeType": "BinaryExpression",
                 "messageId": "comparisonWithNaN",
                 "endLine": 2,
-                "endColumn": 17
+                "endColumn": 17,
+                "suggestions": [
+                    {
+                        "messageId": "replaceWithIsNaN",
+                        "fix": {
+                            "range": [
+                                29,
+                                37
+                            ],
+                            "text": "!Number.isNaN(i)"
+                        },
+                        "desc": "Replace with Number.isNaN."
+                    },
+                    {
+                        "messageId": "replaceWithCastingAndIsNaN",
+                        "fix": {
+                            "range": [
+                                29,
+                                37
+                            ],
+                            "text": "!Number.isNaN(Number(i))"
+                        },
+                        "desc": "Replace with Number.isNaN and cast to a Number."
+                    }
+                ]
             },
             {
                 "ruleId": "space-unary-ops",
