@@ -1,6 +1,7 @@
 ---
 title: no-class-assign
 rule_type: problem
+handled_by_typescript: true
 ---
 
 
@@ -8,8 +9,6 @@ rule_type: problem
 `ClassDeclaration` creates a variable, and we can modify the variable.
 
 ```js
-/*eslint-env es6*/
-
 class A { }
 A = 0;
 ```
@@ -26,7 +25,6 @@ Examples of **incorrect** code for this rule:
 
 ```js
 /*eslint no-class-assign: "error"*/
-/*eslint-env es6*/
 
 class A { }
 A = 0;
@@ -38,7 +36,6 @@ A = 0;
 
 ```js
 /*eslint no-class-assign: "error"*/
-/*eslint-env es6*/
 
 A = 0;
 class A { }
@@ -50,7 +47,6 @@ class A { }
 
 ```js
 /*eslint no-class-assign: "error"*/
-/*eslint-env es6*/
 
 class A {
     b() {
@@ -65,7 +61,6 @@ class A {
 
 ```js
 /*eslint no-class-assign: "error"*/
-/*eslint-env es6*/
 
 let A = class A {
     b() {
@@ -83,7 +78,6 @@ Examples of **correct** code for this rule:
 
 ```js
 /*eslint no-class-assign: "error"*/
-/*eslint-env es6*/
 
 let A = class A { }
 A = 0; // A is a variable.
@@ -95,7 +89,6 @@ A = 0; // A is a variable.
 
 ```js
 /*eslint no-class-assign: "error"*/
-/*eslint-env es6*/
 
 let A = class {
     b() {
@@ -110,7 +103,6 @@ let A = class {
 
 ```js
 /*eslint no-class-assign: 2*/
-/*eslint-env es6*/
 
 class A {
     b(A) {

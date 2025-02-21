@@ -8,7 +8,14 @@
 
 /* eslint sort-keys: ["error", "asc"] -- Long, so make more readable */
 
-/** @type {import("../lib/shared/types").ConfigData} */
+/*
+ * IMPORTANT!
+ *
+ * We cannot add a "name" property to this object because it's still used in eslintrc
+ * which doesn't support the "name" property. If we add a "name" property, it will
+ * cause an error.
+ */
+
 module.exports = Object.freeze({
     rules: Object.freeze({
         "constructor-super": "error",

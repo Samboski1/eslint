@@ -10,10 +10,10 @@
 // Requirements
 //------------------------------------------------------------------------------
 
-const assert = require("assert");
-const fs = require("fs");
-const os = require("os");
-const path = require("path");
+const assert = require("node:assert");
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
 const escapeStringRegExp = require("escape-string-regexp");
 const fCache = require("file-entry-cache");
 const sinon = require("sinon");
@@ -27,7 +27,7 @@ const {
 const hash = require("../../../lib/cli-engine/hash");
 const { unIndent, createCustomTeardown } = require("../../_utils");
 const coreRules = require("../../../lib/rules");
-const childProcess = require("child_process");
+const childProcess = require("node:child_process");
 
 //------------------------------------------------------------------------------
 // Tests
@@ -114,6 +114,11 @@ describe("LegacyESLint", () => {
     });
 
     describe("ESLint constructor function", () => {
+
+        it("should have a static property indicating the configType being used", () => {
+            assert.strictEqual(LegacyESLint.configType, "eslintrc");
+        });
+
         it("the default value of 'options.cwd' should be the current working directory.", async () => {
             process.chdir(__dirname);
             try {
@@ -257,6 +262,30 @@ describe("LegacyESLint", () => {
             );
         });
     });
+
+    describe("hasFlag", () => {
+
+        let eslint;
+
+        it("should return false if the flag is present and active", () => {
+            eslint = new LegacyESLint({ cwd: getFixturePath(), flags: ["test_only"] });
+
+            assert.strictEqual(eslint.hasFlag("test_only"), false);
+        });
+
+        it("should return false if the flag is present and inactive", () => {
+            eslint = new LegacyESLint({ cwd: getFixturePath(), flags: ["test_only_old"] });
+
+            assert.strictEqual(eslint.hasFlag("test_only_old"), false);
+        });
+
+        it("should return false if the flag is not present", () => {
+            eslint = new LegacyESLint({ cwd: getFixturePath() });
+
+            assert.strictEqual(eslint.hasFlag("x_feature"), false);
+        });
+    });
+
 
     describe("lintText()", () => {
         let eslint;
@@ -907,7 +936,7 @@ describe("LegacyESLint", () => {
         });
 
         describe('plugin shorthand notation ("@scope" for "@scope/eslint-plugin")', () => {
-            const Module = require("module");
+            const Module = require("node:module");
             let originalFindPath = null;
 
             /* eslint-disable no-underscore-dangle -- Override Node API */
@@ -954,7 +983,7 @@ describe("LegacyESLint", () => {
 
             assert.deepStrictEqual(
                 result.usedDeprecatedRules,
-                [{ ruleId: "indent-legacy", replacedBy: ["indent"] }]
+                [{ ruleId: "indent-legacy", replacedBy: [] }]
             );
         });
 
@@ -1824,7 +1853,7 @@ describe("LegacyESLint", () => {
             assert.deepStrictEqual(
                 results[0].usedDeprecatedRules,
                 [
-                    { ruleId: "indent-legacy", replacedBy: ["indent"] },
+                    { ruleId: "indent-legacy", replacedBy: [] },
                     { ruleId: "callback-return", replacedBy: [] }
                 ]
             );
@@ -1853,7 +1882,7 @@ describe("LegacyESLint", () => {
 
             assert.deepStrictEqual(
                 results[0].usedDeprecatedRules,
-                [{ ruleId: "indent-legacy", replacedBy: ["indent"] }]
+                [{ ruleId: "indent-legacy", replacedBy: [] }]
             );
         });
 
@@ -4993,7 +5022,7 @@ describe("LegacyESLint", () => {
                 assert(await engine.isPathIgnored(getFixturePath("ignored-paths", "subdir/node_modules/package/file.js")));
             });
 
-            it("should still apply defaultPatterns if ignore option is is false", async () => {
+            it("should still apply defaultPatterns if ignore option is false", async () => {
                 const cwd = getFixturePath("ignored-paths");
                 const engine = new LegacyESLint({ ignore: false, cwd });
 
@@ -5831,7 +5860,7 @@ describe("LegacyESLint", () => {
             };
             const spy = fakeFS.writeFile;
             const { LegacyESLint: localESLint } = proxyquire("../../../lib/eslint/legacy-eslint", {
-                fs: fakeFS
+                "node:fs": fakeFS
             });
 
             const results = [
@@ -5858,7 +5887,7 @@ describe("LegacyESLint", () => {
             };
             const spy = fakeFS.writeFile;
             const { LegacyESLint: localESLint } = proxyquire("../../../lib/eslint/legacy-eslint", {
-                fs: fakeFS
+                "node:fs": fakeFS
             });
             const results = [
                 {

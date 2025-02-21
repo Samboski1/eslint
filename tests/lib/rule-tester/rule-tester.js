@@ -8,10 +8,12 @@
 // Requirements
 //------------------------------------------------------------------------------
 const sinon = require("sinon"),
-    EventEmitter = require("events"),
+    EventEmitter = require("node:events"),
     { RuleTester } = require("../../../lib/rule-tester"),
     assert = require("chai").assert,
-    nodeAssert = require("assert");
+    nodeAssert = require("node:assert");
+
+const jsonPlugin = require("@eslint/json").default;
 
 //-----------------------------------------------------------------------------
 // Helpers
@@ -463,6 +465,163 @@ describe("RuleTester", () => {
         });
     });
 
+    describe("hooks", () => {
+        const ruleName = "no-var";
+        const rule = require("../../fixtures/testers/rule-tester/no-var");
+
+        ["before", "after"].forEach(hookName => {
+            it(`${hookName} should be called when a function is assigned`, () => {
+                const hookForValid = sinon.stub();
+                const hookForInvalid = sinon.stub();
+
+                ruleTester = new RuleTester();
+                ruleTester.run(ruleName, rule, {
+                    valid: [{
+                        code: "const onlyValid = 42;",
+                        [hookName]: hookForValid
+                    }],
+                    invalid: [{
+                        code: "var onlyValid = 42;",
+                        errors: [/^Bad var/u],
+                        output: " onlyValid = 42;",
+                        [hookName]: hookForInvalid
+                    }]
+                });
+                sinon.assert.calledOnce(hookForValid);
+                sinon.assert.calledOnce(hookForInvalid);
+            });
+
+            it(`${hookName} should cause test to fail when it throws error`, () => {
+                const hook = sinon.stub().throws(new Error("Something happened"));
+
+                ruleTester = new RuleTester();
+                assert.throws(() => ruleTester.run(ruleName, rule, {
+                    valid: [{
+                        code: "const onlyValid = 42;",
+                        [hookName]: hook
+                    }],
+                    invalid: []
+                }), "Something happened");
+                assert.throws(() => ruleTester.run(ruleName, rule, {
+                    valid: [],
+                    invalid: [{
+                        code: "var onlyValid = 42;",
+                        errors: [/^Bad var/u],
+                        output: " onlyValid = 42;",
+                        [hookName]: hook
+                    }]
+                }), "Something happened");
+            });
+
+            it(`${hookName} should throw when not a function is assigned`, () => {
+                ruleTester = new RuleTester();
+                assert.throws(() => ruleTester.run(ruleName, rule, {
+                    valid: [{
+                        code: "const onlyValid = 42;",
+                        [hookName]: 42
+                    }],
+                    invalid: []
+                }), `Optional test case property '${hookName}' must be a function`);
+                assert.throws(() => ruleTester.run(ruleName, rule, {
+                    valid: [],
+                    invalid: [{
+                        code: "var onlyValid = 42;",
+                        errors: [/^Bad var/u],
+                        output: " onlyValid = 42;",
+                        [hookName]: 42
+                    }]
+                }), `Optional test case property '${hookName}' must be a function`);
+            });
+        });
+
+        it("should call both before() and after() hooks even when the case failed", () => {
+            const hookBefore = sinon.stub();
+            const hookAfter = sinon.stub();
+
+            ruleTester = new RuleTester();
+            assert.throws(() => ruleTester.run(ruleName, rule, {
+                valid: [{
+                    code: "var onlyValid = 42;",
+                    before: hookBefore,
+                    after: hookAfter
+                }],
+                invalid: []
+            }));
+            sinon.assert.calledOnce(hookBefore);
+            sinon.assert.calledOnce(hookAfter);
+            assert.throws(() => ruleTester.run(ruleName, rule, {
+                valid: [],
+                invalid: [{
+                    code: "const onlyValid = 42;",
+                    errors: [/^Bad var/u],
+                    output: " onlyValid = 42;",
+                    before: hookBefore,
+                    after: hookAfter
+                }]
+            }));
+            sinon.assert.calledTwice(hookBefore);
+            sinon.assert.calledTwice(hookAfter);
+        });
+
+        it("should call both before() and after() hooks regardless syntax errors", () => {
+            const hookBefore = sinon.stub();
+            const hookAfter = sinon.stub();
+
+            ruleTester = new RuleTester();
+            assert.throws(() => ruleTester.run(ruleName, rule, {
+                valid: [{
+                    code: "invalid javascript code",
+                    before: hookBefore,
+                    after: hookAfter
+                }],
+                invalid: []
+            }), /parsing error/u);
+            sinon.assert.calledOnce(hookBefore);
+            sinon.assert.calledOnce(hookAfter);
+            assert.throws(() => ruleTester.run(ruleName, rule, {
+                valid: [],
+                invalid: [{
+                    code: "invalid javascript code",
+                    errors: [/^Bad var/u],
+                    output: " onlyValid = 42;",
+                    before: hookBefore,
+                    after: hookAfter
+                }]
+            }), /parsing error/u);
+            sinon.assert.calledTwice(hookBefore);
+            sinon.assert.calledTwice(hookAfter);
+        });
+
+        it("should call after() hook even when before() throws", () => {
+            const hookBefore = sinon.stub().throws(new Error("Something happened in before()"));
+            const hookAfter = sinon.stub();
+
+            ruleTester = new RuleTester();
+            assert.throws(() => ruleTester.run(ruleName, rule, {
+                valid: [{
+                    code: "const onlyValid = 42;",
+                    before: hookBefore,
+                    after: hookAfter
+                }],
+                invalid: []
+            }), "Something happened in before()");
+            sinon.assert.calledOnce(hookBefore);
+            sinon.assert.calledOnce(hookAfter);
+            assert.throws(() => ruleTester.run(ruleName, rule, {
+                valid: [],
+                invalid: [{
+                    code: "var onlyValid = 42;",
+                    errors: [/^Bad var/u],
+                    output: " onlyValid = 42;",
+                    before: hookBefore,
+                    after: hookAfter
+                }]
+            }), "Something happened in before()");
+            sinon.assert.calledTwice(hookBefore);
+            sinon.assert.calledTwice(hookAfter);
+        });
+    });
+
     it("should not throw an error when everything passes", () => {
         ruleTester.run("no-eval", require("../../fixtures/testers/rule-tester/no-eval"), {
             valid: [
@@ -580,7 +739,7 @@ describe("RuleTester", () => {
                     "bar = baz;"
                 ],
                 invalid: [
-                    { code: "var foo = bar; var baz = quux", errors: [{ type: "VariableDeclaration" }, null] }
+                    { code: "var foo = bar; var baz = quux", errors: [{ message: "Bad var.", type: "VariableDeclaration" }, null] }
                 ]
             });
         }, /Error should be a string, object, or RegExp/u);
@@ -634,6 +793,26 @@ describe("RuleTester", () => {
                 { code: "var foo = bar;", output: " foo = bar;", errors: [/^Bad var/u] }
             ]
         });
+    });
+
+    it("should not throw an error when the error is a string and the suggestion fixer is failing", () => {
+        ruleTester.run("no-var", require("../../fixtures/testers/rule-tester/suggestions").withFailingFixer, {
+            valid: [],
+            invalid: [
+                { code: "foo", errors: ["some message"] }
+            ]
+        });
+    });
+
+    it("throws an error when the error is a string and the suggestion fixer provides a fix", () => {
+        assert.throws(() => {
+            ruleTester.run("no-var", require("../../fixtures/testers/rule-tester/suggestions").basic, {
+                valid: [],
+                invalid: [
+                    { code: "foo", errors: ["Avoid using identifiers named 'foo'."] }
+                ]
+            });
+        }, "Error at index 0 has suggestions. Please convert the test error into an object and specify 'suggestions' property on it to test suggestions.");
     });
 
     it("should throw an error when the error is an object with an unknown property name", () => {
@@ -783,6 +962,17 @@ describe("RuleTester", () => {
                 ]
             });
         }, /Expected no autofixes to be suggested/u);
+    });
+
+    it("should throw an error when the expected output is not null and the output does not differ from the code", () => {
+        assert.throws(() => {
+            ruleTester.run("no-var", require("../../fixtures/testers/rule-tester/no-eval"), {
+                valid: [],
+                invalid: [
+                    { code: "eval('')", output: "eval('')", errors: 1 }
+                ]
+            });
+        }, "Test property 'output' matches 'code'. If no autofix is expected, then omit the 'output' property or set it to null.");
     });
 
     it("should throw an error when the expected output isn't specified and problems produce output", () => {
@@ -1020,14 +1210,28 @@ describe("RuleTester", () => {
         }, /fatal parsing error/iu);
     });
 
-    it("should not throw an error if invalid code has at least an expected empty error object", () => {
-        ruleTester.run("no-eval", require("../../fixtures/testers/rule-tester/no-eval"), {
-            valid: ["Eval(foo)"],
-            invalid: [{
-                code: "eval(foo)",
-                errors: [{}]
-            }]
-        });
+    it("should throw an error if an error object has no properties", () => {
+        assert.throws(() => {
+            ruleTester.run("no-eval", require("../../fixtures/testers/rule-tester/no-eval"), {
+                valid: ["Eval(foo)"],
+                invalid: [{
+                    code: "eval(foo)",
+                    errors: [{}]
+                }]
+            });
+        }, "Test error must specify either a 'messageId' or 'message'.");
+    });
+
+    it("should throw an error if an error has a property besides message or messageId", () => {
+        assert.throws(() => {
+            ruleTester.run("no-eval", require("../../fixtures/testers/rule-tester/no-eval"), {
+                valid: ["Eval(foo)"],
+                invalid: [{
+                    code: "eval(foo)",
+                    errors: [{ line: 1 }]
+                }]
+            });
+        }, "Test error must specify either a 'messageId' or 'message'.");
     });
 
     it("should pass-through the globals config of valid tests to the to rule", () => {
@@ -1128,22 +1332,6 @@ describe("RuleTester", () => {
         });
     });
 
-    it("should allow setting the filename to a file path without extension", () => {
-        ruleTester.run("", require("../../fixtures/testers/rule-tester/no-test-filename"), {
-            valid: [
-                {
-                    code: "var foo = 'bar'",
-                    filename: "somefile"
-                },
-                {
-                    code: "var foo = 'bar'",
-                    filename: "path/to/somefile"
-                }
-            ],
-            invalid: []
-        });
-    });
-
     it("should allow setting the filename to a file path with extension", () => {
         ruleTester.run("", require("../../fixtures/testers/rule-tester/no-test-filename"), {
             valid: [
@@ -1167,6 +1355,10 @@ describe("RuleTester", () => {
     it("should allow setting the filename to a file path without extension", () => {
         ruleTester.run("", require("../../fixtures/testers/rule-tester/no-test-filename"), {
             valid: [
+                {
+                    code: "var foo = 'bar'",
+                    filename: "somefile"
+                },
                 {
                     code: "var foo = 'bar'",
                     filename: "path/to/somefile"
@@ -1258,7 +1450,7 @@ describe("RuleTester", () => {
                         languageOptions: {
                             parser: esprima
                         },
-                        errors: [{ line: 1 }]
+                        errors: [{ message: "eval sucks.", line: 1 }]
                     }
                 ]
             });
@@ -1320,10 +1512,33 @@ describe("RuleTester", () => {
                         errors: 1
                     }]
                 });
-            }, /Parser must be an object with a parse\(\) or parseForESLint\(\) method/u);
+            }, /Key "languageOptions": Key "parser": Expected object with parse\(\) or parseForESLint\(\) method\./u);
 
         });
 
+    });
+
+    describe("Languages", () => {
+        it("should work with a language that doesn't have language options", () => {
+            const ruleTesterJsonLanguage = new RuleTester({
+                plugins: {
+                    json: jsonPlugin
+                },
+                language: "json/json"
+            });
+
+            ruleTesterJsonLanguage.run("no-empty-keys", jsonPlugin.rules["no-empty-keys"], {
+                valid: [
+                    '{"foo": 1, "bar": 2}'
+                ],
+                invalid: [
+                    {
+                        code: '{"": 1}',
+                        errors: [{ messageId: "emptyKey" }]
+                    }
+                ]
+            });
+        });
     });
 
     it("should throw an error with the original message and an additional description if rule has `meta.schema` of an invalid type", () => {
@@ -1852,6 +2067,7 @@ describe("RuleTester", () => {
             invalid: [{ code: "foo", errors: [{ messageId: "avoidFoo" }] }]
         });
     });
+
     it("should assert match between resulting message output if messageId and data provided in both test and result", () => {
         assert.throws(() => {
             ruleTester.run("foo", require("../../fixtures/testers/rule-tester/messageId").withMetaWithData, {
@@ -1859,6 +2075,63 @@ describe("RuleTester", () => {
                 invalid: [{ code: "foo", errors: [{ messageId: "avoidFoo", data: { name: "notFoo" } }] }]
             });
         }, "Hydrated message \"Avoid using variables named 'notFoo'.\" does not match \"Avoid using variables named 'foo'.\"");
+    });
+
+    it("should throw if the message has a single unsubstituted placeholder when data is not specified", () => {
+        assert.throws(() => {
+            ruleTester.run("foo", require("../../fixtures/testers/rule-tester/messageId").withMissingData, {
+                valid: [],
+                invalid: [{ code: "foo", errors: [{ messageId: "avoidFoo" }] }]
+            });
+        }, "The reported message has an unsubstituted placeholder 'name'. Please provide the missing value via the 'data' property in the context.report() call.");
+    });
+
+    it("should throw if the message has a single unsubstituted placeholders when data is specified", () => {
+        assert.throws(() => {
+            ruleTester.run("foo", require("../../fixtures/testers/rule-tester/messageId").withMissingData, {
+                valid: [],
+                invalid: [{ code: "foo", errors: [{ messageId: "avoidFoo", data: { name: "name" } }] }]
+            });
+        }, "Hydrated message \"Avoid using variables named 'name'.\" does not match \"Avoid using variables named '{{ name }}'.");
+    });
+
+    it("should throw if the message has multiple unsubstituted placeholders when data is not specified", () => {
+        assert.throws(() => {
+            ruleTester.run("foo", require("../../fixtures/testers/rule-tester/messageId").withMultipleMissingDataProperties, {
+                valid: [],
+                invalid: [{ code: "foo", errors: [{ messageId: "avoidFoo" }] }]
+            });
+        }, "The reported message has unsubstituted placeholders: 'type', 'name'. Please provide the missing values via the 'data' property in the context.report() call.");
+    });
+
+    it("should not throw if the data in the message contains placeholders not present in the raw message", () => {
+        ruleTester.run("foo", require("../../fixtures/testers/rule-tester/messageId").withPlaceholdersInData, {
+            valid: [],
+            invalid: [{ code: "foo", errors: [{ messageId: "avoidFoo" }] }]
+        });
+    });
+
+    it("should throw if the data in the message contains the same placeholder and data is not specified", () => {
+        assert.throws(() => {
+            ruleTester.run("foo", require("../../fixtures/testers/rule-tester/messageId").withSamePlaceholdersInData, {
+                valid: [],
+                invalid: [{ code: "foo", errors: [{ messageId: "avoidFoo" }] }]
+            });
+        }, "The reported message has an unsubstituted placeholder 'name'. Please provide the missing value via the 'data' property in the context.report() call.");
+    });
+
+    it("should not throw if the data in the message contains the same placeholder and data is specified", () => {
+        ruleTester.run("foo", require("../../fixtures/testers/rule-tester/messageId").withSamePlaceholdersInData, {
+            valid: [],
+            invalid: [{ code: "foo", errors: [{ messageId: "avoidFoo", data: { name: "{{ name }}" } }] }]
+        });
+    });
+
+    it("should not throw an error for specifying non-string data values", () => {
+        ruleTester.run("foo", require("../../fixtures/testers/rule-tester/messageId").withNonStringData, {
+            valid: [],
+            invalid: [{ code: "0", errors: [{ messageId: "avoid", data: { value: 0 } }] }]
+        });
     });
 
     // messageId/message misconfiguration cases
@@ -1892,7 +2165,7 @@ describe("RuleTester", () => {
                 valid: [],
                 invalid: [{ code: "foo", errors: [{ data: "something" }] }]
             });
-        }, "Error must specify 'messageId' if 'data' is used.");
+        }, "Test error must specify either a 'messageId' or 'message'.");
     });
 
     // fixable rules with or without `meta` property
@@ -1949,12 +2222,31 @@ describe("RuleTester", () => {
                     code: "eval(foo)",
                     filename: "/an-absolute-path/foo.js",
                     errors: [{ message: "eval sucks.", type: "CallExpression" }]
+                },
+                {
+                    code: "eval(bar)",
+                    filename: "C:\\an-absolute-path\\foo.js",
+                    errors: [{ message: "eval sucks.", type: "CallExpression" }]
                 }
             ]
         });
     });
 
     describe("suggestions", () => {
+        it("should throw if suggestions are available but not specified", () => {
+            assert.throw(() => {
+                ruleTester.run("suggestions-basic", require("../../fixtures/testers/rule-tester/suggestions").basic, {
+                    valid: [
+                        "var boo;"
+                    ],
+                    invalid: [{
+                        code: "var foo;",
+                        errors: [{ message: "Avoid using identifiers named 'foo'." }]
+                    }]
+                });
+            }, "Error at index 0 has suggestions. Please specify 'suggestions' property on the test error object.");
+        });
+
         it("should pass with valid suggestions (tested using desc)", () => {
             ruleTester.run("suggestions-basic", require("../../fixtures/testers/rule-tester/suggestions").basic, {
                 valid: [
@@ -1963,6 +2255,7 @@ describe("RuleTester", () => {
                 invalid: [{
                     code: "var foo;",
                     errors: [{
+                        message: "Avoid using identifiers named 'foo'.",
                         suggestions: [{
                             desc: "Rename identifier 'foo' to 'bar'",
                             output: "var bar;"
@@ -1979,11 +2272,13 @@ describe("RuleTester", () => {
                     {
                         code: "function foo() {\n  var foo = 1;\n}",
                         errors: [{
+                            message: "Avoid using identifiers named 'foo'.",
                             suggestions: [{
                                 desc: "Rename identifier 'foo' to 'bar'",
                                 output: "function bar() {\n  var foo = 1;\n}"
                             }]
                         }, {
+                            message: "Avoid using identifiers named 'foo'.",
                             suggestions: [{
                                 desc: "Rename identifier 'foo' to 'bar'",
                                 output: "function foo() {\n  var bar = 1;\n}"
@@ -2000,6 +2295,7 @@ describe("RuleTester", () => {
                 invalid: [{
                     code: "var foo;",
                     errors: [{
+                        messageId: "avoidFoo",
                         suggestions: [{
                             messageId: "renameFoo",
                             output: "var bar;"
@@ -2018,6 +2314,7 @@ describe("RuleTester", () => {
                 invalid: [{
                     code: "var foo;",
                     errors: [{
+                        messageId: "avoidFoo",
                         suggestions: [{
                             messageId: "renameFoo",
                             output: "var bar;"
@@ -2030,24 +2327,27 @@ describe("RuleTester", () => {
             });
         });
 
-        it("should pass with valid suggestions (tested using both desc and messageIds for the same suggestion)", () => {
-            ruleTester.run("suggestions-messageIds", require("../../fixtures/testers/rule-tester/suggestions").withMessageIds, {
-                valid: [],
-                invalid: [{
-                    code: "var foo;",
-                    errors: [{
-                        suggestions: [{
-                            desc: "Rename identifier 'foo' to 'bar'",
-                            messageId: "renameFoo",
-                            output: "var bar;"
-                        }, {
-                            desc: "Rename identifier 'foo' to 'baz'",
-                            messageId: "renameFoo",
-                            output: "var baz;"
+        it("should fail with valid suggestions when testing using both desc and messageIds for the same suggestion", () => {
+            assert.throw(() => {
+                ruleTester.run("suggestions-messageIds", require("../../fixtures/testers/rule-tester/suggestions").withMessageIds, {
+                    valid: [],
+                    invalid: [{
+                        code: "var foo;",
+                        errors: [{
+                            messageId: "avoidFoo",
+                            suggestions: [{
+                                desc: "Rename identifier 'foo' to 'bar'",
+                                messageId: "renameFoo",
+                                output: "var bar;"
+                            }, {
+                                desc: "Rename identifier 'foo' to 'baz'",
+                                messageId: "renameFoo",
+                                output: "var baz;"
+                            }]
                         }]
                     }]
-                }]
-            });
+                });
+            }, "Error Suggestion at index 0: Test should not specify both 'desc' and 'messageId'.");
         });
 
         it("should pass with valid suggestions (tested using only desc on a rule that utilizes meta.messages)", () => {
@@ -2056,6 +2356,7 @@ describe("RuleTester", () => {
                 invalid: [{
                     code: "var foo;",
                     errors: [{
+                        messageId: "avoidFoo",
                         suggestions: [{
                             desc: "Rename identifier 'foo' to 'bar'",
                             output: "var bar;"
@@ -2074,6 +2375,7 @@ describe("RuleTester", () => {
                 invalid: [{
                     code: "var foo;",
                     errors: [{
+                        messageId: "avoidFoo",
                         suggestions: [{
                             messageId: "renameFoo",
                             data: { newName: "bar" },
@@ -2088,17 +2390,89 @@ describe("RuleTester", () => {
             });
         });
 
-
-        it("should pass when tested using empty suggestion test objects if the array length is correct", () => {
-            ruleTester.run("suggestions-messageIds", require("../../fixtures/testers/rule-tester/suggestions").withMessageIds, {
-                valid: [],
-                invalid: [{
-                    code: "var foo;",
-                    errors: [{
-                        suggestions: [{}, {}]
+        it("should fail with a single missing data placeholder when data is not specified", () => {
+            assert.throws(() => {
+                ruleTester.run("suggestions-messageIds", require("../../fixtures/testers/rule-tester/suggestions").withMissingPlaceholderData, {
+                    valid: [],
+                    invalid: [{
+                        code: "var foo;",
+                        errors: [{
+                            messageId: "avoidFoo",
+                            suggestions: [{
+                                messageId: "renameFoo",
+                                output: "var bar;"
+                            }]
+                        }]
                     }]
-                }]
-            });
+                });
+            }, "The message of the suggestion has an unsubstituted placeholder 'newName'. Please provide the missing value via the 'data' property for the suggestion in the context.report() call.");
+        });
+
+        it("should fail with a single missing data placeholder when data is specified", () => {
+            assert.throws(() => {
+                ruleTester.run("suggestions-messageIds", require("../../fixtures/testers/rule-tester/suggestions").withMissingPlaceholderData, {
+                    valid: [],
+                    invalid: [{
+                        code: "var foo;",
+                        errors: [{
+                            messageId: "avoidFoo",
+                            suggestions: [{
+                                messageId: "renameFoo",
+                                data: { other: "name" },
+                                output: "var bar;"
+                            }]
+                        }]
+                    }]
+                });
+            }, "The message of the suggestion has an unsubstituted placeholder 'newName'. Please provide the missing value via the 'data' property for the suggestion in the context.report() call.");
+        });
+
+        it("should fail with multiple missing data placeholders when data is not specified", () => {
+            assert.throws(() => {
+                ruleTester.run("suggestions-messageIds", require("../../fixtures/testers/rule-tester/suggestions").withMultipleMissingPlaceholderDataProperties, {
+                    valid: [],
+                    invalid: [{
+                        code: "var foo;",
+                        errors: [{
+                            messageId: "avoidFoo",
+                            suggestions: [{
+                                messageId: "rename",
+                                output: "var bar;"
+                            }]
+                        }]
+                    }]
+                });
+            }, "The message of the suggestion has unsubstituted placeholders: 'currentName', 'newName'. Please provide the missing values via the 'data' property for the suggestion in the context.report() call.");
+        });
+
+        it("should fail when tested using empty suggestion test objects even if the array length is correct", () => {
+            assert.throw(() => {
+                ruleTester.run("suggestions-messageIds", require("../../fixtures/testers/rule-tester/suggestions").withMessageIds, {
+                    valid: [],
+                    invalid: [{
+                        code: "var foo;",
+                        errors: [{
+                            messageId: "avoidFoo",
+                            suggestions: [{}, {}]
+                        }]
+                    }]
+                });
+            }, "Error Suggestion at index 0: Test must specify either 'messageId' or 'desc'");
+        });
+
+        it("should fail when tested using non-empty suggestion test objects without an output property", () => {
+            assert.throw(() => {
+                ruleTester.run("suggestions-messageIds", require("../../fixtures/testers/rule-tester/suggestions").withMessageIds, {
+                    valid: [],
+                    invalid: [{
+                        code: "var foo;",
+                        errors: [{
+                            messageId: "avoidFoo",
+                            suggestions: [{ messageId: "renameFoo" }, {}]
+                        }]
+                    }]
+                });
+            }, 'Error Suggestion at index 0: The "output" property is required.');
         });
 
         it("should support explicitly expecting no suggestions", () => {
@@ -2108,6 +2482,7 @@ describe("RuleTester", () => {
                     invalid: [{
                         code: "eval('var foo');",
                         errors: [{
+                            message: "eval sucks.",
                             suggestions
                         }]
                     }]
@@ -2123,6 +2498,7 @@ describe("RuleTester", () => {
                         invalid: [{
                             code: "var foo;",
                             errors: [{
+                                message: "Avoid using identifiers named 'foo'.",
                                 suggestions
                             }]
                         }]
@@ -2138,13 +2514,27 @@ describe("RuleTester", () => {
                     invalid: [{
                         code: "var foo;",
                         errors: [{
+                            message: "Bad var.",
                             suggestions: [{
                                 messageId: "this-does-not-exist"
                             }]
                         }]
                     }]
                 });
-            }, "Error should have an array of suggestions. Instead received \"undefined\" on error with message: \"Bad var.\"");
+            }, 'Error should have suggestions on error with message: "Bad var."');
+        });
+
+        it("should support specifying only the amount of suggestions", () => {
+            ruleTester.run("suggestions-basic", require("../../fixtures/testers/rule-tester/suggestions").basic, {
+                valid: [],
+                invalid: [{
+                    code: "var foo;",
+                    errors: [{
+                        message: "Avoid using identifiers named 'foo'.",
+                        suggestions: 1
+                    }]
+                }]
+            });
         });
 
         it("should fail when there are a different number of suggestions", () => {
@@ -2154,6 +2544,22 @@ describe("RuleTester", () => {
                     invalid: [{
                         code: "var foo;",
                         errors: [{
+                            message: "Avoid using identifiers named 'foo'.",
+                            suggestions: 2
+                        }]
+                    }]
+                });
+            }, "Error should have 2 suggestions. Instead found 1 suggestions");
+        });
+
+        it("should fail when there are a different number of suggestions for arrays", () => {
+            assert.throws(() => {
+                ruleTester.run("suggestions-basic", require("../../fixtures/testers/rule-tester/suggestions").basic, {
+                    valid: [],
+                    invalid: [{
+                        code: "var foo;",
+                        errors: [{
+                            message: "Avoid using identifiers named 'foo'.",
                             suggestions: [{
                                 desc: "Rename identifier 'foo' to 'bar'",
                                 output: "var bar;"
@@ -2165,6 +2571,21 @@ describe("RuleTester", () => {
                     }]
                 });
             }, "Error should have 2 suggestions. Instead found 1 suggestions");
+        });
+
+        it("should fail when the suggestion property is neither a number nor an array", () => {
+            assert.throws(() => {
+                ruleTester.run("suggestions-basic", require("../../fixtures/testers/rule-tester/suggestions").basic, {
+                    valid: [],
+                    invalid: [{
+                        code: "var foo;",
+                        errors: [{
+                            message: "Avoid using identifiers named 'foo'.",
+                            suggestions: "1"
+                        }]
+                    }]
+                });
+            }, "Test error object property 'suggestions' should be an array or a number");
         });
 
         it("should throw if suggestion fix made a syntax error.", () => {
@@ -2197,6 +2618,7 @@ describe("RuleTester", () => {
                         invalid: [{
                             code: "one()",
                             errors: [{
+                                message: "make a syntax error",
                                 suggestions: [{
                                     desc: "make a syntax error",
                                     output: "one two()"
@@ -2215,6 +2637,7 @@ describe("RuleTester", () => {
                     invalid: [{
                         code: "var foo;",
                         errors: [{
+                            message: "Avoid using identifiers named 'foo'.",
                             suggestions: [{
                                 desc: "not right",
                                 output: "var baz;"
@@ -2222,29 +2645,27 @@ describe("RuleTester", () => {
                         }]
                     }]
                 });
-            }, "Error Suggestion at index 0 : desc should be \"not right\" but got \"Rename identifier 'foo' to 'bar'\" instead.");
+            }, "Error Suggestion at index 0: desc should be \"not right\" but got \"Rename identifier 'foo' to 'bar'\" instead.");
         });
 
-        it("should throw if the suggestion description doesn't match (although messageIds match)", () => {
-            assert.throws(() => {
-                ruleTester.run("suggestions-messageIds", require("../../fixtures/testers/rule-tester/suggestions").withMessageIds, {
-                    valid: [],
-                    invalid: [{
-                        code: "var foo;",
-                        errors: [{
-                            suggestions: [{
-                                desc: "Rename identifier 'foo' to 'bar'",
-                                messageId: "renameFoo",
-                                output: "var bar;"
-                            }, {
-                                desc: "Rename id 'foo' to 'baz'",
-                                messageId: "renameFoo",
-                                output: "var baz;"
-                            }]
+
+        it("should pass when different suggestion matchers use desc and messageId", () => {
+            ruleTester.run("suggestions-messageIds", require("../../fixtures/testers/rule-tester/suggestions").withMessageIds, {
+                valid: [],
+                invalid: [{
+                    code: "var foo;",
+                    errors: [{
+                        messageId: "avoidFoo",
+                        suggestions: [{
+                            desc: "Rename identifier 'foo' to 'bar'",
+                            output: "var bar;"
+                        }, {
+                            messageId: "renameFoo",
+                            output: "var baz;"
                         }]
                     }]
-                });
-            }, "Error Suggestion at index 1 : desc should be \"Rename id 'foo' to 'baz'\" but got \"Rename identifier 'foo' to 'baz'\" instead.");
+                }]
+            });
         });
 
         it("should throw if the suggestion messageId doesn't match", () => {
@@ -2254,6 +2675,7 @@ describe("RuleTester", () => {
                     invalid: [{
                         code: "var foo;",
                         errors: [{
+                            messageId: "avoidFoo",
                             suggestions: [{
                                 messageId: "unused",
                                 output: "var bar;"
@@ -2264,29 +2686,7 @@ describe("RuleTester", () => {
                         }]
                     }]
                 });
-            }, "Error Suggestion at index 0 : messageId should be 'unused' but got 'renameFoo' instead.");
-        });
-
-        it("should throw if the suggestion messageId doesn't match (although descriptions match)", () => {
-            assert.throws(() => {
-                ruleTester.run("suggestions-messageIds", require("../../fixtures/testers/rule-tester/suggestions").withMessageIds, {
-                    valid: [],
-                    invalid: [{
-                        code: "var foo;",
-                        errors: [{
-                            suggestions: [{
-                                desc: "Rename identifier 'foo' to 'bar'",
-                                messageId: "renameFoo",
-                                output: "var bar;"
-                            }, {
-                                desc: "Rename identifier 'foo' to 'baz'",
-                                messageId: "avoidFoo",
-                                output: "var baz;"
-                            }]
-                        }]
-                    }]
-                });
-            }, "Error Suggestion at index 1 : messageId should be 'avoidFoo' but got 'renameFoo' instead.");
+            }, "Error Suggestion at index 0: messageId should be 'unused' but got 'renameFoo' instead.");
         });
 
         it("should throw if test specifies messageId for a rule that doesn't have meta.messages", () => {
@@ -2296,6 +2696,7 @@ describe("RuleTester", () => {
                     invalid: [{
                         code: "var foo;",
                         errors: [{
+                            message: "Avoid using identifiers named 'foo'.",
                             suggestions: [{
                                 messageId: "renameFoo",
                                 output: "var bar;"
@@ -2303,7 +2704,7 @@ describe("RuleTester", () => {
                         }]
                     }]
                 });
-            }, "Error Suggestion at index 0 : Test can not use 'messageId' if rule under test doesn't define 'meta.messages'.");
+            }, "Error Suggestion at index 0: Test can not use 'messageId' if rule under test doesn't define 'meta.messages'.");
         });
 
         it("should throw if test specifies messageId that doesn't exist in the rule's meta.messages", () => {
@@ -2313,6 +2714,7 @@ describe("RuleTester", () => {
                     invalid: [{
                         code: "var foo;",
                         errors: [{
+                            messageId: "avoidFoo",
                             suggestions: [{
                                 messageId: "renameFoo",
                                 output: "var bar;"
@@ -2323,7 +2725,7 @@ describe("RuleTester", () => {
                         }]
                     }]
                 });
-            }, "Error Suggestion at index 1 : Test has invalid messageId 'removeFoo', the rule under test allows only one of ['avoidFoo', 'unused', 'renameFoo'].");
+            }, "Error Suggestion at index 1: Test has invalid messageId 'removeFoo', the rule under test allows only one of ['avoidFoo', 'unused', 'renameFoo'].");
         });
 
         it("should throw if hydrated desc doesn't match (wrong data value)", () => {
@@ -2333,6 +2735,7 @@ describe("RuleTester", () => {
                     invalid: [{
                         code: "var foo;",
                         errors: [{
+                            messageId: "avoidFoo",
                             suggestions: [{
                                 messageId: "renameFoo",
                                 data: { newName: "car" },
@@ -2345,7 +2748,7 @@ describe("RuleTester", () => {
                         }]
                     }]
                 });
-            }, "Error Suggestion at index 0 : Hydrated test desc \"Rename identifier 'foo' to 'car'\" does not match received desc \"Rename identifier 'foo' to 'bar'\".");
+            }, "Error Suggestion at index 0: Hydrated test desc \"Rename identifier 'foo' to 'car'\" does not match received desc \"Rename identifier 'foo' to 'bar'\".");
         });
 
         it("should throw if hydrated desc doesn't match (wrong data key)", () => {
@@ -2355,6 +2758,7 @@ describe("RuleTester", () => {
                     invalid: [{
                         code: "var foo;",
                         errors: [{
+                            messageId: "avoidFoo",
                             suggestions: [{
                                 messageId: "renameFoo",
                                 data: { newName: "bar" },
@@ -2367,7 +2771,7 @@ describe("RuleTester", () => {
                         }]
                     }]
                 });
-            }, "Error Suggestion at index 1 : Hydrated test desc \"Rename identifier 'foo' to '{{ newName }}'\" does not match received desc \"Rename identifier 'foo' to 'baz'\".");
+            }, "Error Suggestion at index 1: Hydrated test desc \"Rename identifier 'foo' to '{{ newName }}'\" does not match received desc \"Rename identifier 'foo' to 'baz'\".");
         });
 
         it("should throw if test specifies both desc and data", () => {
@@ -2377,6 +2781,7 @@ describe("RuleTester", () => {
                     invalid: [{
                         code: "var foo;",
                         errors: [{
+                            messageId: "avoidFoo",
                             suggestions: [{
                                 desc: "Rename identifier 'foo' to 'bar'",
                                 messageId: "renameFoo",
@@ -2390,7 +2795,7 @@ describe("RuleTester", () => {
                         }]
                     }]
                 });
-            }, "Error Suggestion at index 0 : Test should not specify both 'desc' and 'data'.");
+            }, "Error Suggestion at index 0: Test should not specify both 'desc' and 'data'.");
         });
 
         it("should throw if test uses data but doesn't specify messageId", () => {
@@ -2400,6 +2805,7 @@ describe("RuleTester", () => {
                     invalid: [{
                         code: "var foo;",
                         errors: [{
+                            messageId: "avoidFoo",
                             suggestions: [{
                                 messageId: "renameFoo",
                                 data: { newName: "bar" },
@@ -2411,7 +2817,7 @@ describe("RuleTester", () => {
                         }]
                     }]
                 });
-            }, "Error Suggestion at index 1 : Test must specify 'messageId' if 'data' is used.");
+            }, "Error Suggestion at index 1: Test must specify 'messageId' if 'data' is used.");
         });
 
         it("should throw if the resulting suggestion output doesn't match", () => {
@@ -2421,6 +2827,7 @@ describe("RuleTester", () => {
                     invalid: [{
                         code: "var foo;",
                         errors: [{
+                            message: "Avoid using identifiers named 'foo'.",
                             suggestions: [{
                                 desc: "Rename identifier 'foo' to 'bar'",
                                 output: "var baz;"
@@ -2431,6 +2838,24 @@ describe("RuleTester", () => {
             }, "Expected the applied suggestion fix to match the test suggestion output");
         });
 
+        it("should throw if the resulting suggestion output is the same as the original source code", () => {
+            assert.throws(() => {
+                ruleTester.run("suggestions-basic", require("../../fixtures/testers/rule-tester/suggestions").withFixerWithoutChanges, {
+                    valid: [],
+                    invalid: [{
+                        code: "var foo;",
+                        errors: [{
+                            message: "Avoid using identifiers named 'foo'.",
+                            suggestions: [{
+                                desc: "Rename identifier 'foo' to 'bar'",
+                                output: "var foo;"
+                            }]
+                        }]
+                    }]
+                });
+            }, "The output of a suggestion should differ from the original source code for suggestion at index: 0 on error with message: \"Avoid using identifiers named 'foo'.\"");
+        });
+
         it("should fail when specified suggestion isn't an object", () => {
             assert.throws(() => {
                 ruleTester.run("suggestions-basic", require("../../fixtures/testers/rule-tester/suggestions").basic, {
@@ -2438,6 +2863,7 @@ describe("RuleTester", () => {
                     invalid: [{
                         code: "var foo;",
                         errors: [{
+                            message: "Avoid using identifiers named 'foo'.",
                             suggestions: [null]
                         }]
                     }]
@@ -2450,6 +2876,7 @@ describe("RuleTester", () => {
                     invalid: [{
                         code: "var foo;",
                         errors: [{
+                            messageId: "avoidFoo",
                             suggestions: [
                                 {
                                     messageId: "renameFoo",
@@ -2472,6 +2899,7 @@ describe("RuleTester", () => {
                     invalid: [{
                         code: "var foo;",
                         errors: [{
+                            message: "Avoid using identifiers named 'foo'.",
                             suggestions: [{
                                 message: "Rename identifier 'foo' to 'bar'"
                             }]
@@ -2488,6 +2916,7 @@ describe("RuleTester", () => {
                     invalid: [{
                         code: "var foo;",
                         errors: [{
+                            messageId: "avoidFoo",
                             suggestions: [{
                                 messageId: "renameFoo",
                                 output: "var bar;"
@@ -2784,6 +3213,43 @@ describe("RuleTester", () => {
         }, /A fatal parsing error occurred in autofix.\nError: .+\nAutofix output:\n.+/u);
     });
 
+    describe("type checking", () => {
+        it('should throw if "only" property is not a boolean', () => {
+
+            // "only" has to be falsy as itOnly is not mocked for all test cases
+            assert.throws(() => {
+                ruleTester.run("foo", require("../../fixtures/testers/rule-tester/no-var"), {
+                    valid: [{ code: "foo", only: "" }],
+                    invalid: []
+                });
+            }, /Optional test case property 'only' must be a boolean/u);
+
+            assert.throws(() => {
+                ruleTester.run("foo", require("../../fixtures/testers/rule-tester/no-var"), {
+                    valid: [],
+                    invalid: [{ code: "foo", only: 0, errors: 1 }]
+                });
+            }, /Optional test case property 'only' must be a boolean/u);
+        });
+
+        it('should throw if "filename" property is not a string', () => {
+            assert.throws(() => {
+                ruleTester.run("foo", require("../../fixtures/testers/rule-tester/no-var"), {
+                    valid: [{ code: "foo", filename: false }],
+                    invalid: []
+
+                });
+            }, /Optional test case property 'filename' must be a string/u);
+
+            assert.throws(() => {
+                ruleTester.run("foo", require("../../fixtures/testers/rule-tester/no-var"), {
+                    valid: ["foo"],
+                    invalid: [{ code: "foo", errors: 1, filename: 0 }]
+                });
+            }, /Optional test case property 'filename' must be a string/u);
+        });
+    });
+
     describe("sanitize test cases", () => {
         let originalRuleTesterIt;
         let spyRuleTesterIt;
@@ -2844,6 +3310,301 @@ describe("RuleTester", () => {
             sinon.assert.calledWith(spyRuleTesterIt, code);
         });
 
+    });
+
+    describe("duplicate test cases", () => {
+        describe("valid test cases", () => {
+            it("throws with duplicate string test cases", () => {
+                assert.throws(() => {
+                    ruleTester.run("foo", {
+                        meta: {},
+                        create() {
+                            return {};
+                        }
+                    }, {
+                        valid: ["foo", "foo"],
+                        invalid: []
+                    });
+                }, "detected duplicate test case");
+            });
+
+            it("throws with duplicate object test cases", () => {
+                assert.throws(() => {
+                    ruleTester.run("foo", {
+                        meta: {},
+                        create() {
+                            return {};
+                        }
+                    }, {
+                        valid: [{ code: "foo" }, { code: "foo" }],
+                        invalid: []
+                    });
+                }, "detected duplicate test case");
+            });
+
+            it("throws with string and object test cases", () => {
+                assert.throws(() => {
+                    ruleTester.run("foo", {
+                        meta: {},
+                        create() {
+                            return {};
+                        }
+                    }, {
+                        valid: ["foo", { code: "foo" }],
+                        invalid: []
+                    });
+                }, "detected duplicate test case");
+            });
+
+            it("ignores the name property", () => {
+                assert.throws(() => {
+                    ruleTester.run("foo", {
+                        meta: {},
+                        create() {
+                            return {};
+                        }
+                    }, {
+                        valid: [{ code: "foo" }, { name: "bar", code: "foo" }],
+                        invalid: []
+                    });
+                }, "detected duplicate test case");
+            });
+
+            it("does not ignore top level test case properties nested in other test case properties", () => {
+                ruleTester.run("foo", {
+                    meta: { schema: [{ type: "object" }] },
+                    create() {
+                        return {};
+                    }
+                }, {
+                    valid: [{ options: [{ name: "foo" }], name: "foo", code: "same" }, { options: [{ name: "bar" }], name: "bar", code: "same" }],
+                    invalid: []
+                });
+            });
+
+            it("does not throw an error for defining the same test case in different run calls", () => {
+                const rule = {
+                    meta: {},
+                    create() {
+                        return {};
+                    }
+                };
+
+                ruleTester.run("foo", rule, {
+                    valid: ["foo"],
+                    invalid: []
+                });
+
+                ruleTester.run("foo", rule, {
+                    valid: ["foo"],
+                    invalid: []
+                });
+            });
+        });
+
+        describe("invalid test cases", () => {
+            it("throws with duplicate object test cases", () => {
+                assert.throws(() => {
+                    ruleTester.run("foo", {
+                        meta: {},
+                        create(context) {
+                            return {
+                                VariableDeclaration(node) {
+                                    context.report(node, "foo bar");
+                                }
+                            };
+                        }
+                    }, {
+                        valid: ["foo"],
+                        invalid: [
+                            { code: "const x = 123;", errors: [{ message: "foo bar" }] },
+                            { code: "const x = 123;", errors: [{ message: "foo bar" }] }
+                        ]
+                    });
+                }, "detected duplicate test case");
+            });
+
+            it("throws with duplicate object test cases when options is a primitive", () => {
+                assert.throws(() => {
+                    ruleTester.run("foo", {
+                        meta: { schema: false },
+                        create(context) {
+                            return {
+                                VariableDeclaration(node) {
+                                    context.report(node, "foo bar");
+                                }
+                            };
+                        }
+                    }, {
+                        valid: ["foo"],
+                        invalid: [
+                            { code: "const x = 123;", errors: [{ message: "foo bar" }], options: ["abc"] },
+                            { code: "const x = 123;", errors: [{ message: "foo bar" }], options: ["abc"] }
+                        ]
+                    });
+                }, "detected duplicate test case");
+            });
+
+            it("throws with duplicate object test cases when options is a nested serializable object", () => {
+                assert.throws(() => {
+                    ruleTester.run("foo", {
+                        meta: { schema: false },
+                        create(context) {
+                            return {
+                                VariableDeclaration(node) {
+                                    context.report(node, "foo bar");
+                                }
+                            };
+                        }
+                    }, {
+                        valid: ["foo"],
+                        invalid: [
+                            { code: "const x = 123;", errors: [{ message: "foo bar" }], options: [{ foo: [{ a: true, b: [1, 2, 3] }] }] },
+                            { code: "const x = 123;", errors: [{ message: "foo bar" }], options: [{ foo: [{ a: true, b: [1, 2, 3] }] }] }
+                        ]
+                    });
+                }, "detected duplicate test case");
+            });
+
+            it("throws with duplicate object test cases even when property order differs", () => {
+                assert.throws(() => {
+                    ruleTester.run("foo", {
+                        meta: {},
+                        create(context) {
+                            return {
+                                VariableDeclaration(node) {
+                                    context.report(node, "foo bar");
+                                }
+                            };
+                        }
+                    }, {
+                        valid: ["foo"],
+                        invalid: [
+                            { code: "const x = 123;", errors: [{ message: "foo bar" }] },
+                            { errors: [{ message: "foo bar" }], code: "const x = 123;" }
+                        ]
+                    });
+                }, "detected duplicate test case");
+            });
+
+            it("ignores duplicate test case when non-serializable property present (settings)", () => {
+                ruleTester.run("foo", {
+                    meta: {},
+                    create(context) {
+                        return {
+                            VariableDeclaration(node) {
+                                context.report(node, "foo bar");
+                            }
+                        };
+                    }
+                }, {
+                    valid: ["foo"],
+                    invalid: [
+                        { code: "const x = 123;", errors: [{ message: "foo bar" }], settings: { foo: /abc/u } },
+                        { code: "const x = 123;", errors: [{ message: "foo bar" }], settings: { foo: /abc/u } }
+                    ]
+                });
+            });
+
+            it("ignores duplicate test case when non-serializable property present (languageOptions.parserOptions)", () => {
+                ruleTester.run("foo", {
+                    meta: {},
+                    create(context) {
+                        return {
+                            VariableDeclaration(node) {
+                                context.report(node, "foo bar");
+                            }
+                        };
+                    }
+                }, {
+                    valid: ["foo"],
+                    invalid: [
+                        { code: "const x = 123;", errors: [{ message: "foo bar" }], languageOptions: { parserOptions: { foo: /abc/u } } },
+                        { code: "const x = 123;", errors: [{ message: "foo bar" }], languageOptions: { parserOptions: { foo: /abc/u } } }
+                    ]
+                });
+            });
+
+            it("ignores duplicate test case when non-serializable property present (plugins)", () => {
+                ruleTester.run("foo", {
+                    meta: {},
+                    create(context) {
+                        return {
+                            VariableDeclaration(node) {
+                                context.report(node, "foo bar");
+                            }
+                        };
+                    }
+                }, {
+                    valid: ["foo"],
+                    invalid: [
+                        { code: "const x = 123;", errors: [{ message: "foo bar" }], plugins: { foo: /abc/u } },
+                        { code: "const x = 123;", errors: [{ message: "foo bar" }], plugins: { foo: /abc/u } }
+                    ]
+                });
+            });
+
+            it("ignores duplicate test case when non-serializable property present (options)", () => {
+                ruleTester.run("foo", {
+                    meta: { schema: false },
+                    create(context) {
+                        return {
+                            VariableDeclaration(node) {
+                                context.report(node, "foo bar");
+                            }
+                        };
+                    }
+                }, {
+                    valid: ["foo"],
+                    invalid: [
+                        { code: "const x = 123;", errors: [{ message: "foo bar" }], options: [{ foo: /abc/u }] },
+                        { code: "const x = 123;", errors: [{ message: "foo bar" }], options: [{ foo: /abc/u }] }
+                    ]
+                });
+            });
+
+            it("detects duplicate test cases even if the error matchers differ", () => {
+                assert.throws(() => {
+                    ruleTester.run("foo", {
+                        meta: { schema: false },
+                        create(context) {
+                            return {
+                                VariableDeclaration(node) {
+                                    context.report(node, "foo bar");
+                                }
+                            };
+                        }
+                    }, {
+                        valid: [],
+                        invalid: [
+                            { code: "const x = 123;", errors: [{ message: "foo bar" }] },
+                            { code: "const x = 123;", errors: 1 }
+                        ]
+                    });
+                }, "detected duplicate test case");
+            });
+
+            it("detects duplicate test cases even if the presence of the output property differs", () => {
+                assert.throws(() => {
+                    ruleTester.run("foo", {
+                        meta: { schema: false },
+                        create(context) {
+                            return {
+                                VariableDeclaration(node) {
+                                    context.report(node, "foo bar");
+                                }
+                            };
+                        }
+                    }, {
+                        valid: [],
+                        invalid: [
+                            { code: "const x = 123;", errors: 1 },
+                            { code: "const x = 123;", errors: 1, output: null }
+                        ]
+                    });
+                }, "detected duplicate test case");
+            });
+        });
     });
 
     describe("SourceCode forbidden methods", () => {

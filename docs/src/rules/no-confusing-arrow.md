@@ -5,9 +5,6 @@ related_rules:
 - no-constant-condition
 - arrow-parens
 ---
-
-This rule was **deprecated** in ESLint v8.53.0. Please use the [corresponding rule](https://eslint.style/rules/js/no-confusing-arrow) in [`@stylistic/eslint-plugin-js`](https://eslint.style/packages/js).
-
 Arrow functions (`=>`) are similar in syntax to some comparison operators (`>`, `<`, `<=`, and `>=`). This rule warns against using the arrow function syntax in places where it could be confused with a comparison operator.
 
 Here's an example where the usage of `=>` could be confusing:
@@ -31,7 +28,6 @@ Examples of **incorrect** code for this rule:
 
 ```js
 /*eslint no-confusing-arrow: "error"*/
-/*eslint-env es6*/
 
 var x = a => 1 ? 2 : 3;
 var x = (a) => 1 ? 2 : 3;
@@ -45,7 +41,7 @@ Examples of **correct** code for this rule:
 
 ```js
 /*eslint no-confusing-arrow: "error"*/
-/*eslint-env es6*/
+
 var x = a => (1 ? 2 : 3);
 var x = (a) => (1 ? 2 : 3);
 var x = (a) => {
@@ -82,7 +78,7 @@ Examples of **incorrect** code for this rule with the `{"allowParens": false}` o
 
 ```js
 /*eslint no-confusing-arrow: ["error", {"allowParens": false}]*/
-/*eslint-env es6*/
+
 var x = a => (1 ? 2 : 3);
 var x = (a) => (1 ? 2 : 3);
 ```
@@ -100,7 +96,7 @@ Examples of **correct** code for this rule with the `{"onlyOneSimpleParam": true
 
 ```js
 /*eslint no-confusing-arrow: ["error", {"onlyOneSimpleParam": true}]*/
-/*eslint-env es6*/
+
 () => 1 ? 2 : 3;
 (a, b) => 1 ? 2 : 3;
 (a = b) => 1 ? 2 : 3;

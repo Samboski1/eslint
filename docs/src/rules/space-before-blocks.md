@@ -8,9 +8,6 @@ related_rules:
 - block-spacing
 - brace-style
 ---
-
-This rule was **deprecated** in ESLint v8.53.0. Please use the [corresponding rule](https://eslint.style/rules/js/space-before-blocks) in [`@stylistic/eslint-plugin-js`](https://eslint.style/packages/js).
-
 Consistency is an important part of any style guide.
 While it is a personal preference where to put the opening brace of blocks,
 it should be consistent across a whole project.
@@ -151,7 +148,6 @@ Examples of **incorrect** code for this rule when configured `{ "functions": "ne
 
 ```js
 /*eslint space-before-blocks: ["error", { "functions": "never", "keywords": "always", "classes": "never" }]*/
-/*eslint-env es6*/
 
 function a() {}
 
@@ -170,7 +166,6 @@ Examples of **correct** code for this rule when configured `{ "functions": "neve
 
 ```js
 /*eslint space-before-blocks: ["error", { "functions": "never", "keywords": "always", "classes": "never" }]*/
-/*eslint-env es6*/
 
 for (;;) {
   // ...
@@ -193,7 +188,6 @@ Examples of **incorrect** code for this rule when configured `{ "functions": "al
 
 ```js
 /*eslint space-before-blocks: ["error", { "functions": "always", "keywords": "never", "classes": "never" }]*/
-/*eslint-env es6*/
 
 function a(){}
 
@@ -212,7 +206,6 @@ Examples of **correct** code for this rule when configured `{ "functions": "alwa
 
 ```js
 /*eslint space-before-blocks: ["error", { "functions": "always", "keywords": "never", "classes": "never" }]*/
-/*eslint-env es6*/
 
 if (a){
   b();
@@ -233,7 +226,6 @@ Examples of **incorrect** code for this rule when configured `{ "functions": "ne
 
 ```js
 /*eslint space-before-blocks: ["error", { "functions": "never", "keywords": "never", "classes": "always" }]*/
-/*eslint-env es6*/
 
 class Foo{
   constructor(){}
@@ -248,7 +240,6 @@ Examples of **correct** code for this rule when configured `{ "functions": "neve
 
 ```js
 /*eslint space-before-blocks: ["error", { "functions": "never", "keywords": "never", "classes": "always" }]*/
-/*eslint-env es6*/
 
 class Foo {
   constructor(){}

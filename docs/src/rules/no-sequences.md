@@ -7,7 +7,7 @@ rule_type: suggestion
 The comma operator includes multiple expressions where only one is expected. It evaluates each operand from left to right and returns the value of the last operand. However, this frequently obscures side effects, and its use is often an accident. Here are some examples of sequences:
 
 ```js
-var a = (3, 5); // a = 5
+let a = (3, 5); // a = 5
 
 a = b += 5, a + b;
 
@@ -160,7 +160,7 @@ for (i = 0, j = 10; i < j; i++, j--);
 ## When Not To Use It
 
 Disable this rule if sequence expressions with the comma operator are acceptable.
-Another case is where you might want to report all usages of the comma operator, even in a for loop. You can achieve this using rule `no-restricted-syntax`:
+Another case is where you might want to report all usages of the comma operator, even in a `for` loop. You can achieve this using rule `no-restricted-syntax`:
 
 ```js
 {

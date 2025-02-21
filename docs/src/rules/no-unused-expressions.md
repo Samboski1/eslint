@@ -15,11 +15,11 @@ This rule aims to eliminate unused expressions which have no effect on the state
 This rule does not apply to function calls or constructor calls with the `new` operator, because they could have *side effects* on the state of the program.
 
 ```js
-var i = 0;
+let i = 0;
 function increment() { i += 1; }
 increment(); // return value is unused, but i changed as a side effect
 
-var nThings = 0;
+let nThings = 0;
 function Thing() { nThings += 1; }
 new Thing(); // constructed object is unused, but nThings changed as a side effect
 ```
@@ -251,7 +251,7 @@ JSX is most-commonly used in the React ecosystem, where it is compiled to `React
 
 Examples of **incorrect** code for the `{ "enforceForJSX": true }` option:
 
-::: incorrect { "ecmaFeatures": { "jsx": true } }
+::: incorrect { "parserOptions": { "ecmaFeatures": { "jsx": true } } }
 
 ```jsx
 /*eslint no-unused-expressions: ["error", { "enforceForJSX": true }]*/
@@ -265,14 +265,14 @@ Examples of **incorrect** code for the `{ "enforceForJSX": true }` option:
 
 Examples of **correct** code for the `{ "enforceForJSX": true }` option:
 
-::: correct { "ecmaFeatures": { "jsx": true } }
+::: correct { "parserOptions": { "ecmaFeatures": { "jsx": true } } }
 
 ```jsx
 /*eslint no-unused-expressions: ["error", { "enforceForJSX": true }]*/
 
-var myComponentPartial = <MyComponent />;
+const myComponentPartial = <MyComponent />;
 
-var myFragment = <></>;
+const myFragment = <></>;
 ```
 
 :::

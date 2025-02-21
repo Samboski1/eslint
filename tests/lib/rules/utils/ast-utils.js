@@ -10,11 +10,11 @@
 //------------------------------------------------------------------------------
 
 const assert = require("chai").assert,
-    util = require("util"),
+    util = require("node:util"),
     espree = require("espree"),
     astUtils = require("../../../../lib/rules/utils/ast-utils"),
     { Linter } = require("../../../../lib/linter"),
-    { SourceCode } = require("../../../../lib/source-code");
+    { SourceCode } = require("../../../../lib/languages/js/source-code");
 
 //------------------------------------------------------------------------------
 // Tests
@@ -56,6 +56,32 @@ describe("ast-utils", () => {
                 callCount > 0,
                 `Expected ${func.toString()} to be called at least once but it was not called`
             );
+        });
+    });
+
+    describe("ECMASCRIPT_GLOBALS", () => {
+        it("should contain es3 globals", () => {
+            assert.ownInclude(astUtils.ECMASCRIPT_GLOBALS, { Object: false });
+        });
+
+        it("should contain es5 globals", () => {
+            assert.ownInclude(astUtils.ECMASCRIPT_GLOBALS, { JSON: false });
+        });
+
+        it("should contain es2015 globals", () => {
+            assert.ownInclude(astUtils.ECMASCRIPT_GLOBALS, { Promise: false });
+        });
+
+        it("should contain es2017 globals", () => {
+            assert.ownInclude(astUtils.ECMASCRIPT_GLOBALS, { SharedArrayBuffer: false });
+        });
+
+        it("should contain es2020 globals", () => {
+            assert.ownInclude(astUtils.ECMASCRIPT_GLOBALS, { BigInt: false });
+        });
+
+        it("should contain es2021 globals", () => {
+            assert.ownInclude(astUtils.ECMASCRIPT_GLOBALS, { WeakRef: false });
         });
     });
 
@@ -1004,7 +1030,7 @@ describe("ast-utils", () => {
                     }))
                 });
 
-                linter.verify(key, { rules: { checker: "error" }, parserOptions: { ecmaVersion: 13 } }, "test.js", true);
+                linter.verify(key, { rules: { checker: "error" }, parserOptions: { ecmaVersion: 13 } }, "test.js");
             });
         });
     });
