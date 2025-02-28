@@ -128,7 +128,7 @@ The `ESLint` constructor takes an `options` object. If you omit the `options` ob
 * `options.globInputPaths` (`boolean`)<br>
   Default is `true`. If `false` is present, the [`eslint.lintFiles()`][eslint-lintfiles] method doesn't interpret glob patterns.
 * `options.ignore` (`boolean`)<br>
-  Default is `true`. If `false` is present, the [`eslint.lintFiles()`][eslint-lintfiles] method doesn't respect `.eslintignore` files or `ignorePatterns` in your configuration.
+  Default is `true`. If `false` is present, the [`eslint.lintFiles()`][eslint-lintfiles] method doesn't respect `ignorePatterns` in your configuration.
 * `options.ignorePatterns` (`string[] | null`)<br>
   Default is `null`. Ignore file patterns to use in addition to config ignores. These patterns are relative to `cwd`.
 * `options.passOnNoPatterns` (`boolean`)<br>
@@ -140,16 +140,18 @@ The `ESLint` constructor takes an `options` object. If you omit the `options` ob
 
 * `options.allowInlineConfig` (`boolean`)<br>
   Default is `true`. If `false` is present, ESLint suppresses directive comments in source code. If this option is `false`, it overrides the `noInlineConfig` setting in your configurations.
-* `options.baseConfig` (`ConfigData | null`)<br>
+* `options.baseConfig` (`ConfigData | ConfigData[] | null`)<br>
   Default is `null`. [Configuration object], extended by all configurations used with this instance. You can use this option to define the default settings that will be used if your configuration files don't configure it.
-* `options.overrideConfig` (`ConfigData | null`)<br>
-  Default is `null`. [Configuration object], overrides all configurations used with this instance. You can use this option to define the settings that will be used even if your configuration files configure it.
-* `options.overrideConfigFile` (`string | boolean`)<br>
-  Default is `false`. The path to a configuration file, overrides all configurations used with this instance. The `options.overrideConfig` option is applied after this option is applied.
+* `options.overrideConfig` (`ConfigData | ConfigData[] | null`)<br>
+  Default is `null`. [Configuration object], added after any existing configuration and therefore applies after what's contained in your configuration file (if used).
+* `options.overrideConfigFile` (`null | true | string`)<br>
+  Default is `null`. By default, ESLint searches for a configuration file. When this option is set to `true`, ESLint does not search for a configuration file. When this option is set to a `string` value, ESLint does not search for a configuration file, and uses the provided value as the path to the configuration file.
 * `options.plugins` (`Record<string, Plugin> | null`)<br>
   Default is `null`. The plugin implementations that ESLint uses for the `plugins` setting of your configuration. This is a map-like object. Those keys are plugin IDs and each value is implementation.
 * `options.ruleFilter` (`({ruleId: string, severity: number}) => boolean`)<br>
   Default is `() => true`. A predicate function that filters rules to be run. This function is called with an object containing `ruleId` and `severity`, and returns `true` if the rule should be run.
+* `options.stats` (`boolean`)<br>
+  Default is `false`. When set to `true`, additional statistics are added to the lint results (see [Stats type](../extend/stats#-stats-type)).
 
 ##### Autofix
 
@@ -166,6 +168,11 @@ The `ESLint` constructor takes an `options` object. If you omit the `options` ob
   Default is `.eslintcache`. The [`eslint.lintFiles()`][eslint-lintfiles] method writes caches into this file.
 * `options.cacheStrategy` (`string`)<br>
   Default is `"metadata"`. Strategy for the cache to use for detecting changed files. Can be either `"metadata"` or `"content"`.
+
+##### Other Options
+
+* `options.flags` (`string[]`)<br>
+  Default is `[]`. The feature flags to enable for this instance.
 
 ### ◆ eslint.lintFiles(patterns)
 
@@ -293,6 +300,26 @@ This method loads a formatter. Formatters convert lint results to a human- or ma
 * (`Promise<LoadedFormatter>`)<br>
   The promise that will be fulfilled with a [LoadedFormatter] object.
 
+### ◆ eslint.hasFlag(flagName)
+
+This method is used to determine if a given feature flag is set, as in this example:
+
+```js
+if (eslint.hasFlag("x_feature")) {
+    // handle flag
+}
+```
+
+#### Parameters
+
+* `flagName` (`string`)<br>
+  The flag to check.
+
+#### Return Value
+
+* (`boolean`)<br>
+  True if the flag is enabled.
+
 ### ◆ ESLint.version
 
 ```js
@@ -300,6 +327,16 @@ const version = ESLint.version;
 ```
 
 The version string of ESLint. E.g. `"7.0.0"`.
+
+This is a static property.
+
+### ◆ ESLint.defaultConfig
+
+```js
+const defaultConfig = ESLint.defaultConfig;
+```
+
+The default configuration that ESLint uses internally. This is provided for tooling that wants to calculate configurations using the same defaults as ESLint. Keep in mind that the default configuration may change from version to version, so you shouldn't rely on any particular keys or values to be present.
 
 This is a static property.
 
@@ -367,8 +404,11 @@ The `LintResult` value is the information of the linting result of each file. Th
   The modified source code text. This property is undefined if any fixable messages didn't exist.
 * `source` (`string | undefined`)<br>
   The original source code text. This property is undefined if any messages didn't exist or the `output` property exists.
-* `usedDeprecatedRules` (`{ ruleId: string; replacedBy: string[] }[]`)<br>
+* `stats` (`Stats | undefined`)<br>
+  The [Stats](../extend/stats#-stats-type) object. This contains the lint performance statistics collected with the `stats` option.
+* `usedDeprecatedRules` (`{ ruleId: string; replacedBy: string[]; info: DeprecatedInfo | undefined }[]`)<br>
   The information about the deprecated rules that were used to check this file.
+  The `info` property is set to `rule.meta.deprecated` if the rule uses the [new `deprecated` property](../extend/rule-deprecation).
 
 ### ◆ LintMessage type
 
@@ -382,6 +422,8 @@ The `LintMessage` value is the information of each linting error. The `messages`
   `true` if this is a fatal error unrelated to a rule, like a parsing error.
 * `message` (`string`)<br>
   The error message.
+* `messageId` (`string | undefined`)<br>
+  The message ID of the lint error. This property is undefined if the rule does not use message IDs.
 * `line` (`number | undefined`)<br>
   The 1-based line number of the begin point of this message.
 * `column` (`number | undefined`)<br>
@@ -392,7 +434,7 @@ The `LintMessage` value is the information of each linting error. The `messages`
   The 1-based column number of the end point of this message. This property is undefined if this message is not a range.
 * `fix` (`EditInfo | undefined`)<br>
   The [EditInfo] object of autofix. This property is undefined if this message is not fixable.
-* `suggestions` (`{ desc: string; fix: EditInfo }[] | undefined`)<br>
+* `suggestions` (`{ desc: string; fix: EditInfo; messageId?: string; data?: object }[] | undefined`)<br>
   The list of suggestions. Each suggestion is the pair of a description and an [EditInfo] object to fix code. API users such as editor integrations can choose one of them to fix the problem of this message. This property is undefined if this message doesn't have any suggestions.
 
 ### ◆ SuppressedLintMessage type
@@ -407,6 +449,8 @@ The `SuppressedLintMessage` value is the information of each suppressed linting 
   Same as `fatal` in [LintMessage] type.
 * `message` (`string`)<br>
   Same as `message` in [LintMessage] type.
+* `messageId` (`string | undefined`)<br>
+  Same as `messageId` in [LintMessage] type.
 * `line` (`number | undefined`)<br>
   Same as `line` in [LintMessage] type.
 * `column` (`number | undefined`)<br>
@@ -417,7 +461,7 @@ The `SuppressedLintMessage` value is the information of each suppressed linting 
   Same as `endColumn` in [LintMessage] type.
 * `fix` (`EditInfo | undefined`)<br>
   Same as `fix` in [LintMessage] type.
-* `suggestions` (`{ desc: string; fix: EditInfo }[] | undefined`)<br>
+* `suggestions` (`{ desc: string; fix: EditInfo; messageId?: string; data?: object }[] | undefined`)<br>
   Same as `suggestions` in [LintMessage] type.
 * `suppressions` (`{ kind: string; justification: string}[]`)<br>
   The list of suppressions. Each suppression is the pair of a kind and a justification.
@@ -437,8 +481,48 @@ This edit information means replacing the range of the `range` property by the `
 
 The `LoadedFormatter` value is the object to convert the [LintResult] objects to text. The [eslint.loadFormatter()][eslint-loadformatter] method returns it. It has the following method:
 
-* `format` (`(results: LintResult[], resultsMeta: ResultsMeta) => string | Promise<string>`)<br>
-  The method to convert the [LintResult] objects to text. `resultsMeta` is an object that will contain a `maxWarningsExceeded` object if `--max-warnings` was set and the number of warnings exceeded the limit. The `maxWarningsExceeded` object will contain two properties: `maxWarnings`, the value of the `--max-warnings` option, and `foundWarnings`, the number of lint warnings.
+* `format` (`(results: LintResult[], resultsMeta?: ResultsMeta) => string | Promise<string>`)<br>
+  The method to convert the [LintResult] objects to text. `resultsMeta` is an optional parameter that is primarily intended for use by the ESLint CLI and can contain only a `maxWarningsExceeded` property that would be passed through the [`context`](../extend/custom-formatters#the-context-argument) object when this method calls the underlying formatter function. Note that ESLint automatically generates `cwd` and `rulesMeta` properties of the `context` object, so you typically don't need to pass in the second argument when calling this method.
+
+---
+
+## loadESLint()
+
+The `loadESLint()` function is used for integrations that wish to support both the current configuration system (flat config) and the old configuration system (eslintrc). This function returns the correct `ESLint` class implementation based on the arguments provided:
+
+```js
+const { loadESLint } = require("eslint");
+
+// loads the default ESLint that the CLI would use based on process.cwd()
+const DefaultESLint = await loadESLint();
+
+// loads the flat config version specifically
+const FlatESLint = await loadESLint({ useFlatConfig: true });
+
+// loads the legacy version specifically
+const LegacyESLint = await loadESLint({ useFlatConfig: false });
+```
+
+You can then use the returned constructor to instantiate a new `ESLint` instance, like this:
+
+```js
+// loads the default ESLint that the CLI would use based on process.cwd()
+const DefaultESLint = await loadESLint();
+const eslint = new DefaultESLint();
+```
+
+If you're ever unsure which config system the returned constructor uses, check the `configType` property, which is either `"flat"` or `"eslintrc"`:
+
+```js
+// loads the default ESLint that the CLI would use based on process.cwd()
+const DefaultESLint = await loadESLint();
+
+if (DefaultESLint.configType === "flat") {
+    // do something specific to flat config
+}
+```
+
+If you don't need to support both the old and new configuration systems, then it's recommended to just use the `ESLint` constructor directly.
 
 ---
 
@@ -579,7 +663,8 @@ The information available for each linting message is:
 * `fatal` - usually omitted, but will be set to true if there's a parsing error (not related to a rule).
 * `line` - the line on which the error occurred.
 * `message` - the message that should be output.
-* `nodeType` - the node or token type that was reported with the problem.
+* `messageId` - the ID of the message used to generate the message (this property is omitted if the rule does not use message IDs).
+* `nodeType` - (**Deprecated:** This property will be removed in a future version of ESLint.) the node or token type that was reported with the problem.
 * `ruleId` - the ID of the rule that triggered the messages (or null if `fatal` is true).
 * `severity` - either 1 or 2, depending on your configuration.
 * `endColumn` - the end column of the range on which the error occurred (this property is omitted if it's not range).
@@ -672,6 +757,25 @@ const Linter = require("eslint").Linter;
 Linter.version; // => '9.0.0'
 ```
 
+### Linter#getTimes()
+
+This method is used to get the times spent on (parsing, fixing, linting) a file. See `times` property of the [Stats](../extend/stats#-stats-type) object.
+
+### Linter#getFixPassCount()
+
+This method is used to get the number of autofix passes made. See `fixPasses` property of the [Stats](../extend/stats#-stats-type) object.
+
+### Linter#hasFlag()
+
+This method is used to determine if a given feature flag is set, as in this example:
+
+```js
+const Linter = require("eslint").Linter;
+const linter = new Linter({ flags: ["x_feature"] });
+
+console.log(linter.hasFlag("x_feature")); // true
+```
+
 ---
 
 ## RuleTester
@@ -721,33 +825,35 @@ If you don't specify any options to the `RuleTester` constructor, then it uses t
 
 The `RuleTester#run()` method is used to run the tests. It should be passed the following arguments:
 
-* The name of the rule (string)
-* The rule object itself (see ["working with rules"](../extend/custom-rules))
+* The name of the rule (string).
+* The rule object itself (see ["working with rules"](../extend/custom-rules)).
 * An object containing `valid` and `invalid` properties, each of which is an array containing test cases.
 
 A test case is an object with the following properties:
 
-* `name` (string, optional): The name to use for the test case, to make it easier to find
-* `code` (string, required): The source code that the rule should be run on
+* `name` (string, optional): The name to use for the test case, to make it easier to find.
+* `code` (string, required): The source code that the rule should be run on.
 * `options` (array, optional): The options passed to the rule. The rule severity should not be included in this list.
+* `before` (function, optional): Function to execute before testing the case.
+* `after` (function, optional): Function to execute after testing the case regardless of its result.
 * `filename` (string, optional): The filename for the given case (useful for rules that make assertions about filenames).
 * `only` (boolean, optional): Run this case exclusively for debugging in supported test frameworks.
 
 In addition to the properties above, invalid test cases can also have the following properties:
 
-* `errors` (number or array, required): Asserts some properties of the errors that the rule is expected to produce when run on this code. If this is a number, asserts the number of errors produced. Otherwise, this should be a list of objects, each containing information about a single reported error. The following properties can be used for an error (all are optional):
-    * `message` (string/regexp): The message for the error
-    * `messageId` (string): The Id for the error. See [testing errors with messageId](#testing-errors-with-messageid) for details
-    * `data` (object): Placeholder data which can be used in combination with `messageId`
-    * `type` (string): The type of the reported AST node
-    * `line` (number): The 1-based line number of the reported location
-    * `column` (number): The 1-based column number of the reported location
-    * `endLine` (number): The 1-based line number of the end of the reported location
-    * `endColumn` (number): The 1-based column number of the end of the reported location
-    * `suggestions` (array): An array of objects with suggestion details to check. See [Testing Suggestions](#testing-suggestions) for details
+* `errors` (number or array, required): Asserts some properties of the errors that the rule is expected to produce when run on this code. If this is a number, asserts the number of errors produced. Otherwise, this should be a list of objects, each containing information about a single reported error. The following properties can be used for an error (all are optional unless otherwise noted):
+    * `message` (string/regexp): The message for the error. Must provide this or `messageId`.
+    * `messageId` (string): The ID for the error. Must provide this or `message`. See [testing errors with messageId](#testing-errors-with-messageid) for details.
+    * `data` (object): Placeholder data which can be used in combination with `messageId`.
+    * `type` (string): (**Deprecated:** This property will be removed in a future version of ESLint.) The type of the reported AST node.
+    * `line` (number): The 1-based line number of the reported location.
+    * `column` (number): The 1-based column number of the reported location.
+    * `endLine` (number): The 1-based line number of the end of the reported location.
+    * `endColumn` (number): The 1-based column number of the end of the reported location.
+    * `suggestions` (array): An array of objects with suggestion details to check. Required if the rule produces suggestions. See [Testing Suggestions](#testing-suggestions) for details.
 
     If a string is provided as an error instead of an object, the string is used to assert the `message` of the error.
-* `output` (string, required if the rule fixes code): Asserts the output that will be produced when using this rule for a single pass of autofixing (e.g. with the `--fix` command line flag). If this is `null`, asserts that none of the reported problems suggest autofixes.
+* `output` (string, required if the rule fixes code): Asserts the output that will be produced when using this rule for a single pass of autofixing (e.g. with the `--fix` command line flag). If this is `null` or omitted, asserts that none of the reported problems suggest autofixes.
 
 Any additional properties of a test case will be passed directly to the linter as config options. For example, a test case can have a `languageOptions` property to configure parser behavior:
 
@@ -760,7 +866,7 @@ Any additional properties of a test case will be passed directly to the linter a
 
 If a valid test case only uses the `code` property, it can optionally be provided as a string containing the code, rather than an object with a `code` key.
 
-### Testing errors with `messageId`
+### Testing Errors with `messageId`
 
 If the rule under test uses `messageId`s, you can use `messageId` property in a test case to assert reported error's `messageId` instead of its `message`.
 
@@ -782,14 +888,39 @@ For messages with placeholders, a test case can also use `data` property to addi
 
 Please note that `data` in a test case does not assert `data` passed to `context.report`. Instead, it is used to form the expected message text which is then compared with the received `message`.
 
+### Testing Fixes
+
+The result of applying fixes can be tested by using the `output` property of an invalid test case. The `output` property should be used only when you expect a fix to be applied to the specified `code`; you can safely omit `output` if no changes are expected to the code.  Here's an example:
+
+```js
+ruleTester.run("my-rule-for-no-foo", rule, {
+    valid: [],
+    invalid: [{
+        code: "var foo;",
+        output: "var bar;",
+        errors: [{
+            messageId: "shouldBeBar",
+            line: 1,
+            column: 5
+        }]
+    }]
+})
+```
+
+A the end of this invalid test case, `RuleTester` expects a fix to be applied that results in the code changing from `var foo;` to `var bar;`. If the output after applying the fix doesn't match, then the test fails.
+
+::: important
+ESLint makes its best attempt at applying all fixes, but there is no guarantee that all fixes will be applied. As such, you should aim for testing each type of fix in a separate `RuleTester` test case rather than one test case to test multiple fixes. When there is a conflict between two fixes (because they apply to the same section of code) `RuleTester` applies only the first fix.
+:::
+
 ### Testing Suggestions
 
-Suggestions can be tested by defining a `suggestions` key on an errors object. The options to check for the suggestions are the following (all are optional):
+Suggestions can be tested by defining a `suggestions` key on an errors object. If this is a number, it asserts the number of suggestions provided for the error. Otherwise, this should be an array of objects, each containing information about a single provided suggestion. The following properties can be used:
 
-* `desc` (string): The suggestion `desc` value
-* `messageId` (string): The suggestion `messageId` value for suggestions that use `messageId`s
-* `data` (object): Placeholder data which can be used in combination with `messageId`
-* `output` (string): A code string representing the result of applying the suggestion fix to the input code
+* `desc` (string): The suggestion `desc` value. Must provide this or `messageId`.
+* `messageId` (string): The suggestion `messageId` value for suggestions that use `messageId`s. Must provide this or `desc`.
+* `data` (object): Placeholder data which can be used in combination with `messageId`.
+* `output` (string, required): A code string representing the result of applying the suggestion fix to the input code.
 
 Example:
 
@@ -870,8 +1001,6 @@ ruleTester.run("my-rule", myRule, {
     ]
 })
 ```
-
----
 
 [configuration object]: ../use/configure/
 [builtin-formatters]: ../use/formatters/

@@ -4,7 +4,7 @@ Please be sure to read the contribution guidelines before making or requesting a
 
 ## Code of Conduct
 
-This project adheres to the [Open JS Foundation Code of Conduct](https://eslint.org/conduct). We kindly request that you read over our code of conduct before contributing.
+This project adheres to the [OpenJS Foundation Code of Conduct](https://eslint.org/conduct). We kindly request that you read over our code of conduct before contributing.
 
 ## Filing Issues
 
@@ -15,11 +15,11 @@ Before filing an issue, please be sure to read the guidelines for what you're re
 * [Propose a Rule Change](https://eslint.org/docs/latest/contribute/propose-rule-change)
 * [Request a Change](https://eslint.org/docs/latest/contribute/request-change)
 
-To report a security vulnerability in ESLint, please use our [HackerOne program](https://hackerone.com/eslint).
+To report a security vulnerability in ESLint, please use our [create an advisory form](https://github.com/eslint/eslint/security/advisories/new) on GitHub.
 
 ## Contributing Code
 
-In order to submit code or documentation to an ESLint project, you’ll be asked to sign our CLA when you send your first pull request. (Read more about the Open JS Foundation CLA process at <https://cla.openjsf.org/>.) Also, please read over the [Pull Request Guidelines](https://eslint.org/docs/latest/contribute/pull-requests).
+In order to submit code or documentation to an ESLint project, you’ll be asked to sign our CLA when you send your first pull request. (Read more about the OpenJS Foundation CLA process at <https://cla.openjsf.org/>.) Also, please read over the [Pull Request Guidelines](https://eslint.org/docs/latest/contribute/pull-requests).
 
 ## Full Documentation
 

@@ -7,8 +7,8 @@ rule_type: suggestion
 In JavaScript, variables can be assigned during declaration, or at any point afterwards using an assignment statement. For example, in the following code, `foo` is initialized during declaration, while `bar` is initialized later.
 
 ```js
-var foo = 1;
-var bar;
+let foo = 1;
+let bar;
 
 if (foo) {
     bar = 1;
@@ -22,8 +22,8 @@ if (foo) {
 This rule is aimed at enforcing or eliminating variable initializations during declaration. For example, in the following code, `foo` is initialized during declaration, while `bar` is not.
 
 ```js
-var foo = 1;
-var bar;
+let foo = 1;
+let bar;
 
 bar = 2;
 ```
@@ -71,7 +71,6 @@ Examples of **incorrect** code for the default `"always"` option:
 
 ```js
 /*eslint init-declarations: ["error", "always"]*/
-/*eslint-env es6*/
 
 function foo() {
     var bar;
@@ -87,7 +86,6 @@ Examples of **correct** code for the default `"always"` option:
 
 ```js
 /*eslint init-declarations: ["error", "always"]*/
-/*eslint-env es6*/
 
 function foo() {
     var bar = 1;
@@ -106,13 +104,12 @@ Examples of **incorrect** code for the `"never"` option:
 
 ```js
 /*eslint init-declarations: ["error", "never"]*/
-/*eslint-env es6*/
 
 function foo() {
     var bar = 1;
     let baz = 2;
 
-    for (var i = 0; i < 1; i++) {}
+    for (let i = 0; i < 1; i++) {}
 }
 ```
 
@@ -124,7 +121,6 @@ Examples of **correct** code for the `"never"` option:
 
 ```js
 /*eslint init-declarations: ["error", "never"]*/
-/*eslint-env es6*/
 
 function foo() {
     var bar;
@@ -145,7 +141,7 @@ Examples of **correct** code for the `"never", { "ignoreForLoopInit": true }` op
 
 ```js
 /*eslint init-declarations: ["error", "never", { "ignoreForLoopInit": true }]*/
-for (var i = 0; i < 1; i++) {}
+for (let i = 0; i < 1; i++) {}
 ```
 
 :::

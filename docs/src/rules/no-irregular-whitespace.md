@@ -39,27 +39,27 @@ This rule disallows the following characters except where the options allow:
 \u000B - Line Tabulation (\v) - <VT>
 \u000C - Form Feed (\f) - <FF>
 \u00A0 - No-Break Space - <NBSP>
-\u0085 - Next Line
-\u1680 - Ogham Space Mark
+\u0085 - Next Line - <NEL>
+\u1680 - Ogham Space Mark - <OGSP>
 \u180E - Mongolian Vowel Separator - <MVS>
 \ufeff - Zero Width No-Break Space - <BOM>
-\u2000 - En Quad
-\u2001 - Em Quad
+\u2000 - En Quad - <NQSP>
+\u2001 - Em Quad - <MQSP>
 \u2002 - En Space - <ENSP>
 \u2003 - Em Space - <EMSP>
-\u2004 - Three-Per-Em
-\u2005 - Four-Per-Em
-\u2006 - Six-Per-Em
-\u2007 - Figure Space
+\u2004 - Three-Per-Em - <THPMSP> - <3/MSP>
+\u2005 - Four-Per-Em - <FPMSP> - <4/MSP>
+\u2006 - Six-Per-Em - <SPMSP> - <6/MSP>
+\u2007 - Figure Space - <FSP>
 \u2008 - Punctuation Space - <PUNCSP>
-\u2009 - Thin Space
-\u200A - Hair Space
+\u2009 - Thin Space - <THSP>
+\u200A - Hair Space - <HSP>
 \u200B - Zero Width Space - <ZWSP>
-\u2028 - Line Separator
-\u2029 - Paragraph Separator
-\u202F - Narrow No-Break Space
-\u205f - Medium Mathematical Space
-\u3000 - Ideographic Space
+\u2028 - Line Separator - <LS> - <LSEP>
+\u2029 - Paragraph Separator - <PS> - <PSEP>
+\u202F - Narrow No-Break Space - <NNBSP>
+\u205f - Medium Mathematical Space - <MMSP>
+\u3000 - Ideographic Space - <IDSP>
 ```
 
 ## Options
@@ -81,31 +81,31 @@ Examples of **incorrect** code for this rule with the default `{ "skipStrings": 
 ```js
 /*eslint no-irregular-whitespace: "error"*/
 
-var thing = function() /*<NBSP>*/{
+const thing = function() /*<NBSP>*/{
     return 'test';
 }
 
-var thing = function( /*<NBSP>*/){
+const foo = function( /*<NBSP>*/){
     return 'test';
 }
 
-var thing = function /*<NBSP>*/(){
+const bar = function /*<NBSP>*/(){
     return 'test';
 }
 
-var thing = function /*<Ogham Space Mark>*/(){
+const baz = function /*<Ogham Space Mark>*/(){
     return 'test';
 }
 
-var thing = function() {
+const qux = function() {
     return 'test'; /*<ENSP>*/
 }
 
-var thing = function() {
+const quux = function() {
     return 'test'; /*<NBSP>*/
 }
 
-var thing = function() {
+const item = function() {
     // Description <NBSP>: some descriptive text
 }
 
@@ -113,12 +113,11 @@ var thing = function() {
 Description <NBSP>: some descriptive text
 */
 
-var thing = function() {
+const func = function() {
     return / <NBSP>regexp/;
 }
 
-/*eslint-env es6*/
-var thing = function() {
+const myFunc = function() {
     return `template <NBSP>string`;
 }
 ```
@@ -132,15 +131,15 @@ Examples of **correct** code for this rule with the default `{ "skipStrings": tr
 ```js
 /*eslint no-irregular-whitespace: "error"*/
 
-var thing = function() {
+const thing = function() {
     return ' <NBSP>thing';
 }
 
-var thing = function() {
+const foo = function() {
     return '​<ZWSP>thing';
 }
 
-var thing = function() {
+const bar = function() {
     return 'th <NBSP>ing';
 }
 ```
@@ -191,7 +190,6 @@ Examples of additional **correct** code for this rule with the `{ "skipTemplates
 
 ```js
 /*eslint no-irregular-whitespace: ["error", { "skipTemplates": true }]*/
-/*eslint-env es6*/
 
 function thing() {
     return `template <NBSP>string`;
@@ -204,11 +202,10 @@ function thing() {
 
 Examples of additional **correct** code for this rule with the `{ "skipJSXText": true }` option:
 
-::: correct { "ecmaFeatures": { "jsx": true } }
+::: correct { "parserOptions": { "ecmaFeatures": { "jsx": true } } }
 
 ```jsx
 /*eslint no-irregular-whitespace: ["error", { "skipJSXText": true }]*/
-/*eslint-env es6*/
 
 function Thing() {
     return <div>text in JSX</div>; // <NBSP> before `JSX`

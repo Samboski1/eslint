@@ -11,13 +11,11 @@ related_rules:
 In ES2015 (ES6), we can use template literals instead of string concatenation.
 
 ```js
-var str = "Hello, " + name + "!";
+const str = "Hello, " + name + "!";
 ```
 
 ```js
-/*eslint-env es6*/
-
-var str = `Hello, ${name}!`;
+const str = `Hello, ${name}!`;
 ```
 
 ## Rule Details
@@ -33,8 +31,8 @@ Examples of **incorrect** code for this rule:
 ```js
 /*eslint prefer-template: "error"*/
 
-var str = "Hello, " + name + "!";
-var str = "Time: " + (12 * 60 * 60 * 1000);
+const str = "Hello, " + name + "!";
+const str1 = "Time: " + (12 * 60 * 60 * 1000);
 ```
 
 :::
@@ -45,14 +43,13 @@ Examples of **correct** code for this rule:
 
 ```js
 /*eslint prefer-template: "error"*/
-/*eslint-env es6*/
 
-var str = "Hello World!";
-var str = `Hello, ${name}!`;
-var str = `Time: ${12 * 60 * 60 * 1000}`;
+const str = "Hello World!";
+const str1 = `Hello, ${name}!`;
+const str2 = `Time: ${12 * 60 * 60 * 1000}`;
 
 // This is reported by `no-useless-concat`.
-var str = "Hello, " + "World!";
+const str4 = "Hello, " + "World!";
 ```
 
 :::

@@ -50,7 +50,7 @@ class A {
 A.sayHi(); // => "hi"
 ```
 
-Also note in the above examples that if you switch a method to a static method, *instances* of the class that call the static method (`let a = new A(); a.sayHi();`) have to be updated to being a static call (`A.sayHi();`) instead of having the instance of the *class* call the method
+Also note in the above examples that if you switch a method to a static method, *instances* of the class that call the static method (`let a = new A(); a.sayHi();`) have to be updated to being a static call (`A.sayHi();`) instead of having the instance of the *class* call the method.
 
 ## Rule Details
 
@@ -62,7 +62,6 @@ Examples of **incorrect** code for this rule:
 
 ```js
 /*eslint class-methods-use-this: "error"*/
-/*eslint-env es6*/
 
 class A {
     foo() {
@@ -79,7 +78,7 @@ Examples of **correct** code for this rule:
 
 ```js
 /*eslint class-methods-use-this: "error"*/
-/*eslint-env es6*/
+
 class A {
     foo() {
         this.bar = "Hello World"; // OK, this is used

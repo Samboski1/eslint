@@ -9,8 +9,6 @@
 // Requirements
 //------------------------------------------------------------------------------
 
-const merge = require("lodash.merge");
-
 const rule = require("../../../lib/rules/no-invalid-this");
 const RuleTester = require("../../../lib/rule-tester/rule-tester");
 
@@ -72,7 +70,8 @@ function extractPatterns(patterns, type) {
 
     // Clone and apply the pattern environment.
     const patternsList = patterns.map(pattern => pattern[type].map(applyCondition => {
-        const thisPattern = merge({}, pattern);
+        const { valid, invalid, ...rest } = pattern; // eslint-disable-line no-unused-vars -- `valid` and `invalid` are used just to exclude properties
+        const thisPattern = structuredClone(rest);
 
         applyCondition(thisPattern);
 
@@ -81,9 +80,6 @@ function extractPatterns(patterns, type) {
         } else {
             thisPattern.code += " /* should error */";
         }
-
-        delete thisPattern.valid;
-        delete thisPattern.invalid;
 
         return thisPattern;
     }));
@@ -150,7 +146,10 @@ const patterns = [
         invalid: [USE_STRICT, IMPLIED_STRICT, MODULES]
     },
 
-    // Just functions.
+    /*
+     * Just functions.
+     * https://github.com/eslint/eslint/issues/3254
+     */
     {
         code: "function foo() { console.log(this); z(x => console.log(x, this)); }",
         languageOptions: { ecmaVersion: 6 },
@@ -586,15 +585,6 @@ const patterns = [
         errors,
         valid: [NORMAL, USE_STRICT, IMPLIED_STRICT, MODULES],
         invalid: []
-    },
-
-    // https://github.com/eslint/eslint/issues/3254
-    {
-        code: "function foo() { console.log(this); z(x => console.log(x, this)); }",
-        languageOptions: { ecmaVersion: 6 },
-        errors,
-        valid: [NORMAL],
-        invalid: [USE_STRICT, IMPLIED_STRICT, MODULES]
     },
 
     // https://github.com/eslint/eslint/issues/3287

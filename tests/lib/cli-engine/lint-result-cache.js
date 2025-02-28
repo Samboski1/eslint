@@ -10,8 +10,8 @@
 
 const assert = require("chai").assert,
     { CLIEngine } = require("../../../lib/cli-engine"),
-    fs = require("fs"),
-    path = require("path"),
+    fs = require("node:fs"),
+    path = require("node:path"),
     proxyquire = require("proxyquire"),
     sinon = require("sinon");
 
@@ -163,16 +163,21 @@ describe("LintResultCache", () => {
             it("contains node version during hashing", () => {
                 const version = "node-=-version";
 
-                sandbox.stub(process, "version").value(version);
-                const NewLintResultCache = proxyquire("../../../lib/cli-engine/lint-result-cache.js", {
-                    "./hash": hashStub
-                });
-                const newLintResultCache = new NewLintResultCache(cacheFileLocation, "metadata");
+                const versionStub = sandbox.stub(process, "version").value(version);
 
-                newLintResultCache.getCachedLintResults(filePath, fakeConfig);
+                try {
+                    const NewLintResultCache = proxyquire("../../../lib/cli-engine/lint-result-cache.js", {
+                        "./hash": hashStub
+                    });
+                    const newLintResultCache = new NewLintResultCache(cacheFileLocation, "metadata");
 
-                assert.ok(hashStub.calledOnce);
-                assert.ok(hashStub.calledWithMatch(version));
+                    newLintResultCache.getCachedLintResults(filePath, fakeConfig);
+
+                    assert.ok(hashStub.calledOnce);
+                    assert.ok(hashStub.calledWithMatch(version));
+                } finally {
+                    versionStub.restore();
+                }
             });
         });
 

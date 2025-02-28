@@ -8,6 +8,9 @@ eleventyNavigation:
 
 ---
 
+{%- from 'components/npm_tabs.macro.html' import npm_tabs with context %}
+{%- from 'components/npx_tabs.macro.html' import npx_tabs %}
+
 ESLint is a tool for identifying and reporting on patterns found in ECMAScript/JavaScript code, with the goal of making code more consistent and avoiding bugs.
 
 ESLint is completely pluggable. Every single rule is a plugin and you can add more at runtime. You can also add community plugins, configurations, and parsers to extend the functionality of ESLint.
@@ -20,80 +23,59 @@ To use ESLint, you must have [Node.js](https://nodejs.org/en/) (`^18.18.0`, `^20
 
 You can install and configure ESLint using this command:
 
-```shell
-npm init @eslint/config
-```
+{{ npm_tabs({
+    command: "init-create",
+    packages: ["@eslint/config@latest"],
+    args: []
+}) }}
 
 If you want to use a specific shareable config that is hosted on npm, you can use the `--config` option and specify the package name:
 
-```shell
-# use `eslint-config-semistandard` shared config
-
-# npm 7+
-npm init @eslint/config -- --config semistandard
-
-# or (`eslint-config` prefix is optional)
-npm init @eslint/config -- --config eslint-config-semistandard
-
-# ⚠️ npm 6.x no extra double-dash:
-npm init @eslint/config --config semistandard
-
-```
-
-The `--config` flag also supports passing in arrays:
-
-```shell
-npm init @eslint/config -- --config semistandard,standard
-# or
-npm init @eslint/config -- --config semistandard --config standard
-```
+{{ npm_tabs({
+    command: "init-create",
+    packages: ["@eslint/config@latest", "--", "--config", "eslint-config-standard"],
+    args: [],
+    comment: "use `eslint-config-standard` shared config - npm 7+"
+}) }}
 
 **Note:** `npm init @eslint/config` assumes you have a `package.json` file already. If you don't, make sure to run `npm init` or `yarn init` beforehand.
 
 After that, you can run ESLint on any file or directory like this:
 
-```shell
-npx eslint yourfile.js
-
-# or
-
-yarn run eslint yourfile.js
-```
+{{ npx_tabs({
+    package: "eslint",
+    args: ["yourfile.js"]
+}) }}
 
 ## Configuration
 
 **Note:** If you are coming from a version before 9.0.0 please see the [migration guide](configure/migration-guide).
 
-After running `npm init @eslint/config`, you'll have an `eslint.config.js` file in your directory. In it, you'll see some rules configured like this:
+When you run `npm init @eslint/config`, you'll be asked a series of questions to determine how you're using ESLint and what options should be included. After answering these questions, you'll have an `eslint.config.js` (or `eslint.config.mjs`) file created in your directory.
+
+For example, one of the questions is "Where does your code run?" If you select "Browser" then your configuration file will contain the definitions for global variables found in web browsers. Here's an example:
 
 ```js
-// eslint.config.js
+import globals from "globals";
+import pluginJs from "@eslint/js";
+
+
+/** @type {import('eslint').Linter.Config[]} */
 export default [
-    {
-        rules: {
-            "no-unused-vars": "error",
-            "no-undef": "error"
-        }
-    }
+  {languageOptions: { globals: globals.browser }},
+  pluginJs.configs.recommended,
 ];
 ```
 
-The names `"no-unused-vars"` and `"no-undef"` are the names of [rules](../rules) in ESLint. The first value is the error level of the rule and can be one of these values:
+The `pluginJs.configs.recommended` object contains configuration to ensure that all of the rules marked as recommended on the [rules page](../rules) will be turned on.  Alternatively, you can use configurations that others have created by searching for "eslint-config" on [npmjs.com](https://www.npmjs.com/search?q=eslint-config).  ESLint will not lint your code unless you extend from a shared configuration or explicitly turn rules on in your configuration.
 
-* `"off"` or `0` - turn the rule off
-* `"warn"` or `1` - turn the rule on as a warning (doesn't affect exit code)
-* `"error"` or `2` - turn the rule on as an error (exit code will be 1)
-
-The three error levels allow you fine-grained control over how ESLint applies rules (for more configuration options and details, see the [configuration docs](configure/)).
-
-Your `eslint.config.js` configuration file will also include a recommended configuration, like this:
+You can configure rules individually by defining a new object with a `rules` key, as in this example:
 
 ```js
-// eslint.config.js
-import js from "@eslint/js";
+import pluginJs from "@eslint/js";
 
 export default [
-    js.configs.recommended,
+    pluginJs.configs.recommended,
 
     {
         rules: {
@@ -104,7 +86,13 @@ export default [
 ];
 ```
 
-The `js.configs.recommended` object contains configuration to ensure that all of the rules marked as recommended on the [rules page](../rules) will be turned on.  Alternatively, you can use configurations that others have created by searching for "eslint-config" on [npmjs.com](https://www.npmjs.com/search?q=eslint-config).  ESLint will not lint your code unless you extend from a shared configuration or explicitly turn rules on in your configuration.
+The names `"no-unused-vars"` and `"no-undef"` are the names of [rules](../rules) in ESLint. The first value is the error level of the rule and can be one of these values:
+
+* "off" or 0 - turn the rule off
+* "warn" or 1 - turn the rule on as a warning (doesn’t affect exit code)
+* "error" or 2 - turn the rule on as an error (exit code will be 1)
+
+The three error levels allow you fine-grained control over how ESLint applies rules (for more configuration options and details, see the configuration docs).
 
 ## Global Install
 
@@ -114,28 +102,41 @@ It is also possible to install ESLint globally, rather than locally, using `npm 
 
 You can also manually set up ESLint in your project.
 
+::: important
+If you are using [pnpm](https://pnpm.io), be sure to create a `.npmrc` file with at least the following settings:
+
+```text
+auto-install-peers=true
+node-linker=hoisted
+```
+
+This ensures that pnpm installs dependencies in a way that is more compatible with npm and is less likely to produce errors.
+:::
+
 Before you begin, you must already have a `package.json` file. If you don't, make sure to run `npm init` or `yarn init` to create the file beforehand.
 
 1. Install the ESLint packages in your project:
 
-   ```shell
-   npm install --save-dev eslint @eslint/js
-   ```
+{{ npm_tabs({
+    command: "install",
+    packages: ["eslint", "@eslint/js"],
+    args: ["--save-dev"]
+}) }}
 
-1. Add an `eslint.config.js` file:
+2. Add an `eslint.config.js` file:
 
    ```shell
    # Create JavaScript configuration file
    touch eslint.config.js
    ```
 
-1. Add configuration to the `eslint.config.js` file. Refer to the [Configure ESLint documentation](configure/) to learn how to add rules, custom configurations, plugins, and more.
+3. Add configuration to the `eslint.config.js` file. Refer to the [Configure ESLint documentation](configure/) to learn how to add rules, custom configurations, plugins, and more.
 
    ```js
-   import js from "@eslint/js";
+   import pluginJs from "@eslint/js";
 
    export default [
-       js.configs.recommended,
+       pluginJs.configs.recommended,
 
       {
           rules: {
@@ -146,11 +147,12 @@ Before you begin, you must already have a `package.json` file. If you don't, mak
    ];
    ```
 
-1. Lint code using the ESLint CLI:
+4. Lint code using the ESLint CLI:
 
-   ```shell
-   npx eslint project-dir/ file1.js
-   ```
+{{ npx_tabs({
+    package: "eslint",
+    args: ["project-dir/", "file.js"]
+}) }}
 
    For more information on the available CLI options, refer to [Command Line Interface](./command-line-interface).
 

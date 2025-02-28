@@ -4,7 +4,7 @@ eleventyNavigation:
     key: migrate to v9
     parent: use eslint
     title: Migrate to v9.x
-    order: 7
+    order: 9
 
 ---
 
@@ -25,13 +25,18 @@ The lists below are ordered roughly by the number of users each change is expect
 * [`--output-file` now writes a file to disk even with an empty output](#output-file)
 * [Change in behavior when no patterns are passed to CLI](#cli-empty-patterns)
 * [`/* eslint */` comments with only severity now retain options from the config file](#eslint-comment-options)
+* [Multiple `/* eslint */` comments for the same rule are now disallowed](#multiple-eslint-comments)
 * [Stricter `/* exported */` parsing](#exported-parsing)
 * [`no-constructor-return` and `no-sequences` rule schemas are stricter](#stricter-rule-schemas)
 * [New checks in `no-implicit-coercion` by default](#no-implicit-coercion)
 * [Case-sensitive flags in `no-invalid-regexp`](#no-invalid-regexp)
 * [`varsIgnorePattern` option of `no-unused-vars` no longer applies to catch arguments](#vars-ignore-pattern)
+* [`no-restricted-imports` now accepts multiple config entries with the same `name`](#no-restricted-imports)
 * [`"eslint:recommended"` and `"eslint:all"` strings no longer accepted in flat config](#string-config)
 * [`no-inner-declarations` has a new default behavior with a new option](#no-inner-declarations)
+* [`no-unused-vars` now defaults `caughtErrors` to `"all"`](#no-unused-vars)
+* [`no-useless-computed-key` flags unnecessary computed member names in classes by default](#no-useless-computed-key)
+* [`camelcase` allow option only accepts an array of strings](#camelcase)
 
 ### Breaking changes for plugin developers
 
@@ -39,6 +44,7 @@ The lists below are ordered roughly by the number of users each change is expect
 * [Removed multiple `context` methods](#removed-context-methods)
 * [Removed `sourceCode.getComments()`](#removed-sourcecode-getcomments)
 * [Removed `CodePath#currentSegments`](#removed-codepath-currentsegments)
+* [Code paths are now precalculated](#codepath-precalc)
 * [Function-style rules are no longer supported](#drop-function-style-rules)
 * [`meta.schema` is required for rules with options](#meta-schema-required)
 * [`FlatRuleTester` is now `RuleTester`](#flat-rule-tester)
@@ -187,6 +193,30 @@ Note that this change only affects cases where the same rule is configured in th
 
 **Related issue(s):** [#17381](https://github.com/eslint/eslint/issues/17381)
 
+## <a name="multiple-eslint-comments"></a> Multiple `/* eslint */` comments for the same rule are now disallowed
+
+Prior to ESLint v9.0.0, if the file being linted contained multiple `/* eslint */` configuration comments for the same rule, the last one would be applied, while the others would be silently ignored. For example:
+
+```js
+/* eslint semi: ["error", "always"] */
+/* eslint semi: ["error", "never"] */
+
+foo() // valid, because the configuration is "never"
+```
+
+In ESLint v9.0.0, the first one is applied, while the others are reported as lint errors:
+
+```js
+/* eslint semi: ["error", "always"] */
+/* eslint semi: ["error", "never"] */ // error: Rule "semi" is already configured by another configuration comment in the preceding code. This configuration is ignored.
+
+foo() // error: Missing semicolon
+```
+
+**To address:** Remove duplicate `/* eslint */` comments.
+
+**Related issue(s):** [#18132](https://github.com/eslint/eslint/issues/18132)
+
 ## <a name="exported-parsing"></a> Stricter `/* exported */` parsing
 
 Prior to ESLint v9.0.0, the `/* exported */` directive incorrectly allowed the following syntax:
@@ -281,6 +311,41 @@ try {
 
 **Related issue(s):** [#17540](https://github.com/eslint/eslint/issues/17540)
 
+## <a name="no-restricted-imports"></a> `no-restricted-imports` now accepts multiple config entries with the same `name`
+
+In previous versions of ESLint, if multiple entries in the `paths` array of your configuration for the `no-restricted-imports` rule had the same `name` property, only the last one would apply, while the previous ones would be ignored.
+
+As of ESLint v9.0.0, all entries apply, allowing for specifying different messages for different imported names. For example, you can now configure the rule like this:
+
+```js
+{
+    rules: {
+        "no-restricted-imports": ["error", {
+            paths: [
+                {
+                    name: "react-native",
+                    importNames: ["Text"],
+                    message: "import 'Text' from 'ui/_components' instead"
+                },
+                {
+                    name: "react-native",
+                    importNames: ["View"],
+                    message: "import 'View' from 'ui/_components' instead"
+                }
+            ]
+        }]
+    }
+}
+```
+
+and both `import { Text } from "react-native"` and `import { View } from "react-native"` will be reported, with different messages.
+
+In previous versions of ESLint, with this configuration only `import { View } from "react-native"` would be reported.
+
+**To address:** If your configuration for this rule has multiple entries with the same `name`, you may need to remove unintentional ones.
+
+**Related issue(s):** [#15261](https://github.com/eslint/eslint/issues/15261)
+
 ## <a name="string-config"></a> `"eslint:recommended"` and `"eslint:all"` no longer accepted in flat config
 
 In ESLint v8.x, `eslint.config.js` could refer to `"eslint:recommended"` and `"eslint:all"` configurations by inserting a string into the config array, as in this example:
@@ -326,6 +391,58 @@ if (test) {
 
 **Related issue(s):** [#15576](https://github.com/eslint/eslint/issues/15576)
 
+## <a name="no-unused-vars"></a> `no-unused-vars` now defaults `caughtErrors` to `"all"`
+
+ESLint v9.0.0 changes the default value for the `no-unused-vars` rule's `caughtErrors` option.
+Previously it defaulted to `"none"` to never check whether caught errors were used.
+It now defaults to `"all"` to check caught errors for being used.
+
+```js
+/*eslint no-unused-vars: "error"*/
+try {}
+catch (error) {
+    // 'error' is defined but never used
+}
+```
+
+**To address:** If you want to allow unused caught errors, such as when writing code that will be directly run in an environment that does not support ES2019 optional catch bindings, set the `caughtErrors` option to `"none"`.
+Otherwise, delete the unused caught errors.
+
+```js
+/*eslint no-unused-vars: "error"*/
+try {}
+catch {
+    // no error
+}
+```
+
+**Related issue(s):** [#17974](https://github.com/eslint/eslint/issues/17974)
+
+## <a name="no-useless-computed-key"></a> `no-useless-computed-key` flags unnecessary computed member names in classes by default
+
+In ESLint v9.0.0, the default value of the `enforceForClassMembers` option of the `no-useless-computed-key` rule was changed from `false` to `true`.
+The effect of this change is that unnecessary computed member names in classes will be flagged by default.
+
+```js
+/*eslint no-useless-computed-key: "error"*/
+
+class SomeClass {
+    ["someMethod"]() {} // ok in ESLint v8, error in ESLint v9.
+}
+```
+
+**To address:** Fix the problems reported by the rule or revert to the previous behavior by setting the `enforceForClassMembers` option to `false`.
+
+**Related issue(s):** [#18042](https://github.com/eslint/eslint/issues/18042)
+
+## <a name="camelcase"></a> `camelcase` allow option only accepts an array of strings
+
+Previously the camelcase rule didn't enforce the `allow` option to be an array of strings. In ESLint v9.0.0, the `allow` option now only accepts an array of strings.
+
+**To address:** If ESLint reports invalid configuration for this rule, update your configuration.
+
+**Related issue(s):** [#18232](https://github.com/eslint/eslint/pull/18232)
+
 ## <a name="removed-context-methods"></a> Removed multiple `context` methods
 
 ESLint v9.0.0 removes multiple deprecated methods from the `context` object and moves them onto the `SourceCode` object:
@@ -363,7 +480,7 @@ In addition to the methods in the above table, there are several other methods t
 |`context.getScope()`|`sourceCode.getScope(node)`|
 |`context.markVariableAsUsed(name)`|`sourceCode.markVariableAsUsed(name, node)`|
 
-**To address:** Following the recommendations in the [blog post](https://eslint.org/blog/2023/09/preparing-custom-rules-eslint-v9/#from-context-to-sourcecode).
+**To address:** Use the automated upgrade tool as recommended in the [blog post](https://eslint.org/blog/2023/09/preparing-custom-rules-eslint-v9/#automatically-update-your-rules).
 
 **Related Issues(s):** [#16999](https://github.com/eslint/eslint/issues/16999), [#13481](https://github.com/eslint/eslint/issues/13481)
 
@@ -383,11 +500,24 @@ ESLint v9.0.0 removes the deprecated `CodePath#currentSegments` property.
 
 **Related Issues(s):** [#17457](https://github.com/eslint/eslint/issues/17457)
 
+## <a name="codepath-precalc"></a> Code paths are now precalculated
+
+Prior to ESLint v9.0.0, code paths were calculated during the same AST traversal used by rules, meaning that the information passed to methods like `onCodePathStart` and `onCodePathSegmentStart` was incomplete. Specifically, array properties like `CodePath#childCodePaths` and `CodePathSegment#nextSegments` began empty and then were filled with the appropriate information as the traversal completed, meaning that those arrays could have different elements depending on when you checked their values.
+
+ESLint v9.0.0 now precalculates code path information before the traversal used by rules. As a result, the code path information is now complete regardless of where it is accessed inside of a rule.
+
+**To address:** If you are accessing any array properties on `CodePath` or `CodePathSegment`, you'll need to update your code. Specifically:
+
+* If you are checking the `length` of any array properties, ensure you are using relative comparison operators like `<`, `>`, `<=`, and `>=` instead of equals.
+* If you are accessing the `nextSegments`, `prevSegments`, `allNextSegments`, or `allPrevSegments` properties on a `CodePathSegment`, or `CodePath#childCodePaths`, verify that your code will still work as expected. To be backwards compatible, consider moving the logic that checks these properties into `onCodePathEnd`.
+
+**Related Issues(s):** [#16999](https://github.com/eslint/eslint/issues/16999)
+
 ## <a name="drop-function-style-rules"></a> Function-style rules are no longer supported
 
 ESLint v9.0.0 drops support for function-style rules. Function-style rules are rules created by exporting a function rather than an object with a `create()` method. This rule format was deprecated in 2016.
 
-**To address:** Update your rules to [the most recent rule format](../extend/custom-rules).
+**To address:** Update your rules to [the most recent rule format](../extend/custom-rules). For rules written in CommonJS, you can also use [`eslint-transforms`](https://github.com/eslint/eslint-transforms/blob/main/README.md#new-rule-format).
 
 The [eslint-plugin/prefer-object-rule](https://github.com/eslint-community/eslint-plugin-eslint-plugin/blob/main/docs/rules/prefer-object-rule.md) rule can help enforce the usage of object-style rules and autofix any remaining function-style rules.
 
@@ -461,12 +591,21 @@ As announced in our [blog post](/blog/2023/10/flat-config-rollout-plans/), the t
 
 In order to aid in the development of high-quality custom rules that are free from common bugs, ESLint v9.0.0 implements several changes to `RuleTester`:
 
+1. **Test case `output` must be different from `code`.** In ESLint v8.x, if  `output` is the same as `code`, it asserts that there was no autofix. When looking at a test case, it's not always immediately clear whether `output` differs from `code`, especially if the strings are longer or multiline, making it difficult for developers to determine whether or not the test case expects an autofix. In ESLint v9.0.0, to avoid this ambiguity, `RuleTester` now throws an error if the test `output` has the same value as the test `code`. Therefore, specifying `output` now necessarily means that the test case expects an autofix and asserts its result. If the test case doesn't expect an autofix, omit the `output` property or set it to `null`. This asserts that there was no autofix.
+1. **Test error objects must specify `message` or `messageId`.** To improve the quality of test coverage, `RuleTester` now throws an error if neither `message` nor `messageId` is specified on test error objects.
+1. **Test error object must specify `suggestions` if the actual error provides suggestions.** In ESLint v8.x, if the `suggestions` property was omitted from test error objects, `RuleTester` wasn't performing any checks related to suggestions, so it was easy to forget to assert if a test case produces suggestions. In ESLint v9.0.0, omitting the `suggestions` property asserts that the actual error does not provide suggestions, while you need to specify the `suggestions` property if the actual error does provide suggestions. We highly recommend that you test suggestions in detail by specifying an array of test suggestion objects, but you can also specify `suggestions: <number>` to assert just the number of suggestions.
+1. **Test suggestion objects must specify `output`.** To improve the quality of test coverage, `RuleTester` now throws an error if `output` property is not specified on test suggestion objects.
+1. **Test suggestion objects must specify `desc` or `messageId`.** To improve the quality of test coverage, `RuleTester` now throws an error if neither `desc` nor `messageId` property is specified on test suggestion objects. It's also not allowed to specify both. If you want to assert the suggestion description text in addition to the `messageId`, then also add the `data` property.
 1. **Suggestion messages must be unique.** Because suggestions are typically displayed in an editor as a dropdown list, it's important that no two suggestions for the same lint problem have the same message. Otherwise, it's impossible to know what any given suggestion will do. This additional check runs automatically.
+1. **Suggestions must change the code.** Suggestions are expected to fix the reported problem by changing the code. `RuleTester` now throws an error if the suggestion test `output` is the same as the test `code`.
 1. **Suggestions must generate valid syntax.** In order for rule suggestions to be helpful, they need to be valid syntax. `RuleTester` now parses the output of suggestions using the same language options as the `code` value and throws an error if parsing fails.
+1. **Test cases must be unique.** Identical test cases can cause confusion and be hard to detect manually in a long test file. Duplicates are now automatically detected and can be safely removed.
+1. **`filename` and `only` must be of the expected type.** `RuleTester` now checks the type of `filename` and `only` properties of test objects. If specified, `filename` must be a string value. If specified, `only` must be a boolean value.
+1. **Messages cannot have unsubstituted placeholders.** The `RuleTester` now also checks if there are {% raw %}`{{ placeholder }}` {% endraw %} still in the message as their values were not passed via `data` in the respective `context.report()` call.
 
 **To address:** Run your rule tests using `RuleTester` and fix any errors that occur. The changes you'll need to make to satisfy `RuleTester` are compatible with ESLint v8.x.
 
-**Related Issues(s):** [#15735](https://github.com/eslint/eslint/issues/15735), [#16908](https://github.com/eslint/eslint/issues/16908)
+**Related Issues(s):** [#15104](https://github.com/eslint/eslint/issues/15104), [#15735](https://github.com/eslint/eslint/issues/15735), [#16908](https://github.com/eslint/eslint/issues/16908), [#18016](https://github.com/eslint/eslint/issues/18016)
 
 ## <a name="flat-eslint"></a> `FlatESLint` is now `ESLint`
 

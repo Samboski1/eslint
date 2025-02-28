@@ -43,7 +43,7 @@ foo = undefined;
 When used with IIFE (immediately-invoked function expression), `void` can be used to force the function keyword to be treated as an expression instead of a declaration:
 
 ```js
-var foo = 1;
+let foo = 1;
 void function(){ foo = 1; }() // will assign foo a value of 1
 +function(){ foo = 1; }() // same as above
 ```
@@ -56,7 +56,7 @@ Some code styles prohibit `void` operator, marking it as non-obvious and hard to
 
 ## Rule Details
 
-This rule aims to eliminate use of void operator.
+This rule aims to eliminate use of `void` operator.
 
 Examples of **incorrect** code for this rule:
 
@@ -68,7 +68,7 @@ Examples of **incorrect** code for this rule:
 void foo
 void someFunction();
 
-var foo = void bar();
+const foo = void bar();
 function baz() {
     return void 0;
 }
@@ -80,11 +80,11 @@ function baz() {
 
 This rule has an object option:
 
-* `allowAsStatement` set to `true` allows the void operator to be used as a statement (Default `false`).
+* `allowAsStatement` set to `true` allows the `void` operator to be used as a statement (Default `false`).
 
 ### allowAsStatement
 
-When `allowAsStatement` is set to true, the rule will not error on cases that the void operator is used as a statement, i.e. when it's not used in an expression position, like in a variable assignment or a function return.
+When `allowAsStatement` is set to true, the rule will not error on cases that the `void` operator is used as a statement, i.e. when it's not used in an expression position, like in a variable assignment or a function return.
 
 Examples of **incorrect** code for `{ "allowAsStatement": true }`:
 
@@ -93,7 +93,7 @@ Examples of **incorrect** code for `{ "allowAsStatement": true }`:
 ```js
 /*eslint no-void: ["error", { "allowAsStatement": true }]*/
 
-var foo = void bar();
+const foo = void bar();
 function baz() {
     return void 0;
 }
