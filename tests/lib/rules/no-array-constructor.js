@@ -238,7 +238,6 @@ ruleTester.run("no-array-constructor", rule, {
             errors: [{
                 messageId: "preferLiteral",
                 suggestions: [{
-                    desc: "Replace with an array literal, add preceding semicolon.",
                     messageId: "useLiteralAfterSemicolon",
                     output: props.code.replace(/(new )?Array\((?<args>.*?)\)/su, ";[$<args>]")
                 }]
@@ -377,6 +376,13 @@ ruleTester.run("no-array-constructor", rule, {
             },
             {
                 code: `
+                export { foo } from 'bar' with { type: "json" }
+                Array()
+                `,
+                languageOptions: { sourceType: "module" }
+            },
+            {
+                code: `
                 export * as foo from 'bar'
                 Array()
                 `,
@@ -384,7 +390,21 @@ ruleTester.run("no-array-constructor", rule, {
             },
             {
                 code: `
+                export * as foo from 'bar' with { type: "json" }
+                Array()
+                `,
+                languageOptions: { sourceType: "module" }
+            },
+            {
+                code: `
                 import foo from 'bar'
+                Array()
+                `,
+                languageOptions: { sourceType: "module" }
+            },
+            {
+                code: `
+                import foo from 'bar' with { type: "json" }
                 Array()
                 `,
                 languageOptions: { sourceType: "module" }
@@ -405,7 +425,6 @@ ruleTester.run("no-array-constructor", rule, {
             errors: [{
                 messageId: "preferLiteral",
                 suggestions: [{
-                    desc: "Replace with an array literal.",
                     messageId: "useLiteral",
                     output: props.code.replace(/(new )?Array\((?<args>.*?)\)/su, "[$<args>]")
                 }]

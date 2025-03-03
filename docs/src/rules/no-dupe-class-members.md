@@ -10,14 +10,12 @@ If there are declarations of the same name in class members, the last declaratio
 It can cause unexpected behaviors.
 
 ```js
-/*eslint-env es6*/
-
 class Foo {
   bar() { console.log("hello"); }
   bar() { console.log("goodbye"); }
 }
 
-var foo = new Foo();
+const foo = new Foo();
 foo.bar(); // goodbye
 ```
 

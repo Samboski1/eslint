@@ -2,9 +2,6 @@
 title: keyword-spacing
 rule_type: layout
 ---
-
-This rule was **deprecated** in ESLint v8.53.0. Please use the [corresponding rule](https://eslint.style/rules/js/keyword-spacing) in [`@stylistic/eslint-plugin-js`](https://eslint.style/packages/js).
-
 Keywords are syntax elements of JavaScript, such as `try` and `if`.
 These keywords have special meaning to the language and so often appear in a different color in code editors.
 As an important part of the language, style guides often refer to the spacing that should be used around keywords.
@@ -58,11 +55,10 @@ if (foo) {
 
 Examples of **correct** code for this rule with the default `{ "before": true }` option:
 
-::: correct { "ecmaFeatures": { "jsx": true } }
+::: correct { "parserOptions": { "ecmaFeatures": { "jsx": true } } }
 
 ```jsx
 /*eslint keyword-spacing: ["error", { "before": true }]*/
-/*eslint-env es6*/
 
 if (foo) {
     //...
@@ -173,7 +169,7 @@ if(foo) {
 
 Examples of **correct** code for this rule with the default `{ "after": true }` option:
 
-::: correct { "ecmaFeatures": { "jsx": true } }
+::: correct { "parserOptions": { "ecmaFeatures": { "jsx": true } } }
 
 ```jsx
 /*eslint keyword-spacing: ["error", { "after": true }]*/

@@ -8,13 +8,13 @@ rule_type: suggestion
 It's unnecessary to use computed properties with literals such as:
 
 ```js
-var foo = {["a"]: "b"};
+const foo = {["a"]: "b"};
 ```
 
 The code can be rewritten as:
 
 ```js
-var foo = {"a": "b"};
+const foo = {"a": "b"};
 ```
 
 ## Rule Details
@@ -28,66 +28,14 @@ Examples of **incorrect** code for this rule:
 ```js
 /*eslint no-useless-computed-key: "error"*/
 
-var a = { ['0']: 0 };
-var a = { ['0+1,234']: 0 };
-var a = { [0]: 0 };
-var a = { ['x']: 0 };
-var a = { ['x']() {} };
-```
+const a = { ['0']: 0 };
+const b = { ['0+1,234']: 0 };
+const c = { [0]: 0 };
+const d = { ['x']: 0 };
+const e = { ['x']() {} };
 
-:::
-
-Examples of **correct** code for this rule:
-
-::: correct
-
-```js
-/*eslint no-useless-computed-key: "error"*/
-
-var c = { 'a': 0 };
-var c = { 0: 0 };
-var a = { x() {} };
-var c = { a: 0 };
-var c = { '0+1,234': 0 };
-```
-
-:::
-
-Examples of additional **correct** code for this rule:
-
-::: correct
-
-```js
-/*eslint no-useless-computed-key: "error"*/
-
-var c = {
-    "__proto__": foo, // defines object's prototype
-
-    ["__proto__"]: bar // defines a property named "__proto__"
-};
-```
-
-:::
-
-## Options
-
-This rule has an object option:
-
-* `enforceForClassMembers` set to `true` additionally applies this rule to class members (Default `false`).
-
-### enforceForClassMembers
-
-By default, this rule does not check class declarations and class expressions,
-as the default value for `enforceForClassMembers` is `false`.
-
-When `enforceForClassMembers` is set to `true`, the rule will also disallow unnecessary computed keys inside of class fields, class methods, class getters, and class setters.
-
-Examples of **incorrect** code for this rule with the `{ "enforceForClassMembers": true }` option:
-
-::: incorrect
-
-```js
-/*eslint no-useless-computed-key: ["error", { "enforceForClassMembers": true }]*/
+const { [0]: foo } = obj;
+const { ['x']: bar } = obj;
 
 class Foo {
     ["foo"] = "bar";
@@ -105,12 +53,21 @@ class Foo {
 
 :::
 
-Examples of **correct** code for this rule with the `{ "enforceForClassMembers": true }` option:
+Examples of **correct** code for this rule:
 
 ::: correct
 
 ```js
-/*eslint no-useless-computed-key: ["error", { "enforceForClassMembers": true }]*/
+/*eslint no-useless-computed-key: "error"*/
+
+const a = { 'a': 0 };
+const b = { 0: 0 };
+const c = { x() {} };
+const d = { a: 0 };
+const e = { '0+1,234': 0 };
+
+const { 0: foo } = obj;
+const { 'x': bar } = obj;
 
 class Foo {
     "foo" = "bar";
@@ -128,12 +85,18 @@ class Foo {
 
 :::
 
-Examples of additional **correct** code for this rule with the `{ "enforceForClassMembers": true }` option:
+Examples of additional **correct** code for this rule:
 
 ::: correct
 
 ```js
-/*eslint no-useless-computed-key: ["error", { "enforceForClassMembers": true }]*/
+/*eslint no-useless-computed-key: "error"*/
+
+const c = {
+    "__proto__": foo, // defines object's prototype
+
+    ["__proto__"]: bar // defines a property named "__proto__"
+};
 
 class Foo {
     ["constructor"]; // instance field named "constructor"
@@ -145,6 +108,60 @@ class Foo {
     static ["constructor"]; // static field named "constructor"
 
     static ["prototype"]; // runtime error, it would be a parsing error without `[]`
+}
+```
+
+:::
+
+## Options
+
+This rule has an object option:
+
+* `enforceForClassMembers` set to `false` disables this rule for class members (Default `true`).
+
+### enforceForClassMembers
+
+By default, this rule also checks class declarations and class expressions,
+as the default value for `enforceForClassMembers` is `true`.
+
+When `enforceForClassMembers` is set to `false`, the rule will allow unnecessary computed keys inside of class fields, class methods, class getters, and class setters.
+
+Examples of **incorrect** code for this rule with the `{ "enforceForClassMembers": false }` option:
+
+::: incorrect
+
+```js
+/*eslint no-useless-computed-key: ["error", { "enforceForClassMembers": false }]*/
+
+const obj = {
+    ["foo"]: "bar",
+    [42]: "baz",
+
+    ['a']() {},
+    get ['b']() {},
+    set ['c'](value) {}
+};
+```
+
+:::
+
+Examples of **correct** code for this rule with the `{ "enforceForClassMembers": false }` option:
+
+::: correct
+
+```js
+/*eslint no-useless-computed-key: ["error", { "enforceForClassMembers": false }]*/
+
+class SomeClass {
+    ["foo"] = "bar";
+    [42] = "baz";
+
+    ['a']() {}
+    get ['b']() {}
+    set ['c'](value) {}
+
+    static ["foo"] = "bar";
+    static ['baz']() {}
 }
 ```
 

@@ -60,6 +60,9 @@ navigation:
   target: _blank
 - text: 演练场
   link: playground
+- text: Code Explorer
+  link: codeExplorer
+  target: _blank
 
 #------------------------------------------------------------------------------
 # Footer
@@ -71,13 +74,16 @@ footer:
   secondary: 次要
   social_icons:
     title: 社交媒体
-    twitter: Twitter
     chat: Discord
     github: GitHub
+    bluesky: Bluesky
+    mastodon: Mastodon
+    twitter: Twitter
   theme_switcher:
     title: 主题切换
     light: 浅色
     dark: 深色
+    system: 系统
   language_switcher:
     title: 语言切换
     description: 切换到你所选择语言版本对应的 ESLint 网站。
@@ -113,4 +119,5 @@ footer:
 
 edit_link:
   start_with: https://github.com/eslint/eslint/edit/main/docs/
+  start_with_latest: https://github.com/eslint/eslint/edit/latest/docs/
   text: 编辑此页

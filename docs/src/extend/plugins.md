@@ -36,9 +36,11 @@ export default plugin;
 module.exports = plugin;
 ```
 
+If you plan to distribute your plugin as an npm package, make sure that the module that exports the plugin object is the default export of your package. This will enable ESLint to import the plugin when it is specified in the command line in the [`--plugin` option](../use/command-line-interface#--plugin).
+
 ### Meta Data in Plugins
 
-For easier debugging and more effective caching of plugins, it's recommended to provide a name and version in a `meta` object at the root of your plugin, like this:
+For easier debugging and more effective caching of plugins, it's recommended to provide a `name` and `version` in a `meta` object at the root of your plugin, like this:
 
 ```js
 const plugin = {
@@ -60,7 +62,27 @@ export default plugin;
 module.exports = plugin;
 ```
 
-The `meta.name` property should match the npm package name for your plugin and the `meta.version` property should match the npm package version for your plugin. The easiest way to accomplish this is by reading this information from your `package.json`.
+The `meta.name` property should match the npm package name for your plugin and the `meta.version` property should match the npm package version for your plugin. The easiest way to accomplish this is by reading this information from your `package.json`, as in this example:
+
+```js
+import fs from "fs";
+
+const pkg = JSON.parse(fs.readFileSync(new URL("./package.json", import.meta.url), "utf8"));
+
+const plugin = {
+
+    // preferred location of name and version
+    meta: {
+        name: pkg.name,
+        version: pkg.version
+    },
+    rules: {
+        // add rules here
+    }
+};
+
+export default plugin;
+```
 
 ::: tip
 While there are no restrictions on plugin names, it helps others to find your plugin on [npm](https://npmjs.com) when you follow these naming conventions:

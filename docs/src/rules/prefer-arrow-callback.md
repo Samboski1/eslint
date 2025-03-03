@@ -45,7 +45,6 @@ The following examples **will not** be flagged:
 
 ```js
 /* eslint prefer-arrow-callback: "error" */
-/* eslint-env es6 */
 
 // arrow function callback
 foo(a => a); // OK
@@ -54,7 +53,7 @@ foo(a => a); // OK
 foo(function*() { yield; }); // OK
 
 // function expression not used as callback or function argument
-var foo = function foo(a) { return a; }; // OK
+const foo = function foo(a) { return a; }; // OK
 
 // unbound function expression callback
 foo(function() { return this.a; }); // OK
@@ -101,7 +100,6 @@ When set to `false` this option prohibits the use of function expressions as cal
 
 ```js
 /* eslint prefer-arrow-callback: [ "error", { "allowUnboundThis": false } ] */
-/* eslint-env es6 */
 
 foo(function() { this.a; });
 

@@ -9,14 +9,14 @@ In JavaScript, `NaN` is a special value of the `Number` type. It's used to repre
 
 Because `NaN` is unique in JavaScript by not being equal to anything, including itself, the results of comparisons to `NaN` are confusing:
 
-* `NaN === NaN` or `NaN == NaN` evaluate to false
-* `NaN !== NaN` or `NaN != NaN` evaluate to true
+* `NaN === NaN` or `NaN == NaN` evaluate to `false`
+* `NaN !== NaN` or `NaN != NaN` evaluate to `true`
 
 Therefore, use `Number.isNaN()` or global `isNaN()` functions to test whether a value is `NaN`.
 
 ## Rule Details
 
-This rule disallows comparisons to 'NaN'.
+This rule disallows comparisons to `NaN`.
 
 Examples of **incorrect** code for this rule:
 
@@ -219,11 +219,17 @@ Examples of **incorrect** code for this rule with `"enforceForIndexOf"` option s
 ```js
 /*eslint use-isnan: ["error", {"enforceForIndexOf": true}]*/
 
-var hasNaN = myArray.indexOf(NaN) >= 0;
+const hasNaN = myArray.indexOf(NaN) >= 0;
 
-var firstIndex = myArray.indexOf(NaN);
+const firstIndex = myArray.indexOf(NaN);
 
-var lastIndex = myArray.lastIndexOf(NaN);
+const lastIndex = myArray.lastIndexOf(NaN);
+
+const indexWithSequenceExpression = myArray.indexOf((doStuff(), NaN));
+
+const firstIndexFromSecondElement = myArray.indexOf(NaN, 1);
+
+const lastIndexFromSecondElement = myArray.lastIndexOf(NaN, 1);
 ```
 
 :::
@@ -240,7 +246,7 @@ function myIsNaN(val) {
 }
 
 function indexOfNaN(arr) {
-    for (var i = 0; i < arr.length; i++) {
+    for (let i = 0; i < arr.length; i++) {
         if (myIsNaN(arr[i])) {
             return i;
         }
@@ -249,7 +255,7 @@ function indexOfNaN(arr) {
 }
 
 function lastIndexOfNaN(arr) {
-    for (var i = arr.length - 1; i >= 0; i--) {
+    for (let i = arr.length - 1; i >= 0; i--) {
         if (myIsNaN(arr[i])) {
             return i;
         }
@@ -257,22 +263,22 @@ function lastIndexOfNaN(arr) {
     return -1;
 }
 
-var hasNaN = myArray.some(myIsNaN);
+const hasNaN = myArray.some(myIsNaN);
 
-var hasNaN = indexOfNaN(myArray) >= 0;
+const hasNaN1 = indexOfNaN(myArray) >= 0;
 
-var firstIndex = indexOfNaN(myArray);
+const firstIndex = indexOfNaN(myArray);
 
-var lastIndex = lastIndexOfNaN(myArray);
-
-// ES2015
-var hasNaN = myArray.some(Number.isNaN);
+const lastIndex = lastIndexOfNaN(myArray);
 
 // ES2015
-var firstIndex = myArray.findIndex(Number.isNaN);
+const hasNaN2 = myArray.some(Number.isNaN);
+
+// ES2015
+const firstIndex1 = myArray.findIndex(Number.isNaN);
 
 // ES2016
-var hasNaN = myArray.includes(NaN);
+const hasNaN3 = myArray.includes(NaN);
 ```
 
 :::

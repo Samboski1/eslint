@@ -9,16 +9,14 @@ related_rules:
 Before ES2015, one must use `Function.prototype.apply()` to call variadic functions.
 
 ```js
-var args = [1, 2, 3, 4];
+const args = [1, 2, 3, 4];
 Math.max.apply(Math, args);
 ```
 
 In ES2015, one can use spread syntax to call variadic functions.
 
 ```js
-/*eslint-env es6*/
-
-var args = [1, 2, 3, 4];
+const args = [1, 2, 3, 4];
 Math.max(...args);
 ```
 
@@ -67,7 +65,7 @@ obj.foo.apply(obj, [1, 2, 3]);
 
 :::
 
-Known limitations:
+## Known Limitations
 
 This rule analyzes code statically to check whether or not the `this` argument is changed. So, if the `this` argument is computed in a dynamic expression, this rule cannot detect a violation.
 

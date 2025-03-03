@@ -318,40 +318,39 @@ describe("options", () => {
                     assert.strictEqual(currentOptions.printConfig, "file.js");
                 });
             });
+
+            describe("--ext", () => {
+                it("should return an array with one item when passed .jsx", () => {
+                    const currentOptions = options.parse("--ext .jsx");
+
+                    assert.isArray(currentOptions.ext);
+                    assert.strictEqual(currentOptions.ext[0], ".jsx");
+                });
+
+                it("should return an array with two items when passed .js and .jsx", () => {
+                    const currentOptions = options.parse("--ext .jsx --ext .js");
+
+                    assert.isArray(currentOptions.ext);
+                    assert.strictEqual(currentOptions.ext[0], ".jsx");
+                    assert.strictEqual(currentOptions.ext[1], ".js");
+                });
+
+                it("should return an array with two items when passed .jsx,.js", () => {
+                    const currentOptions = options.parse("--ext .jsx,.js");
+
+                    assert.isArray(currentOptions.ext);
+                    assert.strictEqual(currentOptions.ext[0], ".jsx");
+                    assert.strictEqual(currentOptions.ext[1], ".js");
+                });
+
+                it("should not exist when not passed", () => {
+                    const currentOptions = options.parse("");
+
+                    assert.notProperty(currentOptions, "ext");
+                });
+            });
         });
 
-    });
-
-
-    describe("--ext", () => {
-        it("should return an array with one item when passed .jsx", () => {
-            const currentOptions = eslintrcOptions.parse("--ext .jsx");
-
-            assert.isArray(currentOptions.ext);
-            assert.strictEqual(currentOptions.ext[0], ".jsx");
-        });
-
-        it("should return an array with two items when passed .js and .jsx", () => {
-            const currentOptions = eslintrcOptions.parse("--ext .jsx --ext .js");
-
-            assert.isArray(currentOptions.ext);
-            assert.strictEqual(currentOptions.ext[0], ".jsx");
-            assert.strictEqual(currentOptions.ext[1], ".js");
-        });
-
-        it("should return an array with two items when passed .jsx,.js", () => {
-            const currentOptions = eslintrcOptions.parse("--ext .jsx,.js");
-
-            assert.isArray(currentOptions.ext);
-            assert.strictEqual(currentOptions.ext[0], ".jsx");
-            assert.strictEqual(currentOptions.ext[1], ".js");
-        });
-
-        it("should not exist when not passed", () => {
-            const currentOptions = eslintrcOptions.parse("");
-
-            assert.notProperty(currentOptions, "ext");
-        });
     });
 
     describe("--rulesdir", () => {
@@ -434,6 +433,36 @@ describe("options", () => {
             const currentOptions = flatOptions.parse("--warn-ignored");
 
             assert.isTrue(currentOptions.warnIgnored);
+        });
+    });
+
+    describe("--stats", () => {
+        it("should return true --stats is passed", () => {
+            const currentOptions = flatOptions.parse("--stats");
+
+            assert.isTrue(currentOptions.stats);
+        });
+    });
+
+    describe("--inspect-config", () => {
+        it("should return true when --inspect-config is passed", () => {
+            const currentOptions = flatOptions.parse("--inspect-config");
+
+            assert.isTrue(currentOptions.inspectConfig);
+        });
+    });
+
+    describe("--flag", () => {
+        it("should return single-item array when --flag is passed once", () => {
+            const currentOptions = flatOptions.parse("--flag x_feature");
+
+            assert.deepStrictEqual(currentOptions.flag, ["x_feature"]);
+        });
+
+        it("should return multi-item array when --flag is passed multiple times", () => {
+            const currentOptions = flatOptions.parse("--flag x_feature --flag y_feature");
+
+            assert.deepStrictEqual(currentOptions.flag, ["x_feature", "y_feature"]);
         });
     });
 
