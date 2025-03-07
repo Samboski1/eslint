@@ -5,8 +5,6 @@ further_reading:
 - https://leanpub.com/understandinges6/read/#leanpub-auto-generators
 ---
 
-This rule was **deprecated** in ESLint v8.53.0. Please use the [corresponding rule](https://eslint.style/rules/js/yield-star-spacing) in [`@stylistic/eslint-plugin-js`](https://eslint.style/packages/js).
-
 ## Rule Details
 
 This rule enforces spacing around the `*` in `yield*` expressions.
@@ -48,7 +46,6 @@ Examples of **correct** code for this rule with the default `"after"` option:
 
 ```js
 /*eslint yield-star-spacing: ["error", "after"]*/
-/*eslint-env es6*/
 
 function* generator() {
   yield* other();
@@ -65,7 +62,6 @@ Examples of **correct** code for this rule with the `"before"` option:
 
 ```js
 /*eslint yield-star-spacing: ["error", "before"]*/
-/*eslint-env es6*/
 
 function *generator() {
   yield *other();
@@ -82,7 +78,6 @@ Examples of **correct** code for this rule with the `"both"` option:
 
 ```js
 /*eslint yield-star-spacing: ["error", "both"]*/
-/*eslint-env es6*/
 
 function * generator() {
   yield * other();
@@ -99,7 +94,6 @@ Examples of **correct** code for this rule with the `"neither"` option:
 
 ```js
 /*eslint yield-star-spacing: ["error", "neither"]*/
-/*eslint-env es6*/
 
 function*generator() {
   yield*other();

@@ -10,11 +10,11 @@
 //------------------------------------------------------------------------------
 
 const assert = require("chai").assert,
-    path = require("path"),
+    path = require("node:path"),
     sinon = require("sinon"),
     shell = require("shelljs"),
-    fs = require("fs"),
-    os = require("os"),
+    fs = require("node:fs"),
+    os = require("node:os"),
     hash = require("../../../lib/cli-engine/hash"),
     {
         Legacy: {
@@ -787,7 +787,7 @@ describe("CLIEngine", () => {
 
         // @scope for @scope/eslint-plugin
         describe("(plugin shorthand)", () => {
-            const Module = require("module");
+            const Module = require("node:module");
             let originalFindPath = null;
 
             /* eslint-disable no-underscore-dangle -- Private Node API overriding */
@@ -836,7 +836,7 @@ describe("CLIEngine", () => {
 
             assert.deepStrictEqual(
                 report.usedDeprecatedRules,
-                [{ ruleId: "indent-legacy", replacedBy: ["indent"] }]
+                [{ ruleId: "indent-legacy", replacedBy: [] }]
             );
             assert.strictEqual(report.results[0].suppressedMessages.length, 0);
         });
@@ -923,13 +923,15 @@ describe("CLIEngine", () => {
 
             engine = new CLIEngine({
                 parser: "esprima",
-                useEslintrc: false
+                useEslintrc: false,
+                ignore: false
             });
 
-            const report = engine.executeOnFiles(["lib/cli.js"]);
+            const report = engine.executeOnFiles(["tests/fixtures/simple-valid-project/foo.js"]);
 
             assert.strictEqual(report.results.length, 1);
             assert.strictEqual(report.results[0].messages.length, 0);
+
             assert.strictEqual(report.results[0].suppressedMessages.length, 0);
         });
 
@@ -1766,7 +1768,7 @@ describe("CLIEngine", () => {
             assert.sameDeepMembers(
                 report.usedDeprecatedRules,
                 [
-                    { ruleId: "indent-legacy", replacedBy: ["indent"] },
+                    { ruleId: "indent-legacy", replacedBy: [] },
                     { ruleId: "callback-return", replacedBy: [] }
                 ]
             );
@@ -1797,7 +1799,7 @@ describe("CLIEngine", () => {
 
             assert.deepStrictEqual(
                 report.usedDeprecatedRules,
-                [{ ruleId: "indent-legacy", replacedBy: ["indent"] }]
+                [{ ruleId: "indent-legacy", replacedBy: [] }]
             );
             assert.strictEqual(report.results[0].suppressedMessages.length, 0);
         });
@@ -4397,7 +4399,7 @@ describe("CLIEngine", () => {
                 assert(engine.isPathIgnored(getFixturePath("ignored-paths", "subdir/node_modules/package/file.js")));
             });
 
-            it("should still apply defaultPatterns if ignore option is is false", () => {
+            it("should still apply defaultPatterns if ignore option is false", () => {
                 const cwd = getFixturePath("ignored-paths");
                 const engine = new CLIEngine({ ignore: false, cwd });
 
@@ -5123,7 +5125,7 @@ describe("CLIEngine", () => {
                     writeFileSync() {}
                 },
                 localCLIEngine = proxyquire("../../../lib/cli-engine/cli-engine", {
-                    fs: fakeFS
+                    "node:fs": fakeFS
                 }).CLIEngine,
                 report = {
                     results: [
@@ -5153,7 +5155,7 @@ describe("CLIEngine", () => {
                     writeFileSync() {}
                 },
                 localCLIEngine = proxyquire("../../../lib/cli-engine/cli-engine", {
-                    fs: fakeFS
+                    "node:fs": fakeFS
                 }).CLIEngine,
                 report = {
                     results: [
@@ -5191,9 +5193,9 @@ describe("CLIEngine", () => {
         });
 
         it("should expose the list of plugin rules", () => {
-            const engine = new CLIEngine({ plugins: ["internal-rules"] });
+            const engine = new CLIEngine({ plugins: ["eslint-plugin-eslint-plugin"] });
 
-            assert(engine.getRules().has("internal-rules/no-invalid-meta"), "internal-rules/no-invalid-meta is present");
+            assert(engine.getRules().has("eslint-plugin/require-meta-schema"), "eslint-plugin/require-meta-schema is present");
         });
 
         it("should expose the list of rules from a preloaded plugin", () => {
@@ -5201,7 +5203,7 @@ describe("CLIEngine", () => {
                 plugins: ["foo"]
             }, {
                 preloadedPlugins: {
-                    foo: require("eslint-plugin-internal-rules")
+                    foo: require("../../../tools/internal-rules")
                 }
             });
 

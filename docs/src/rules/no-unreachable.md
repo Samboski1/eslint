@@ -2,11 +2,15 @@
 title: no-unreachable
 rule_type: problem
 handled_by_typescript: true
+extra_typescript_info: >-
+    TypeScript must be configured with
+    [`allowUnreachableCode: false`](https://www.typescriptlang.org/tsconfig#allowUnreachableCode)
+    for it to consider unreachable code an error.
 ---
 
 
 
-Because the `return`, `throw`, `break`, and `continue` statements unconditionally exit a block of code, any statements after them cannot be executed. Unreachable statements are usually a mistake.
+Because the `return`, `throw`, `continue`, and `break` statements unconditionally exit a block of code, any statements after them cannot be executed. Unreachable statements are usually a mistake.
 
 ```js
 function fn() {

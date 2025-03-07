@@ -18,16 +18,16 @@ Examples of **incorrect** code for this rule:
 ```js
 /*eslint no-inline-comments: "error"*/
 
-var a = 1; // declaring a to 1
+const a = 1; // declaring a to 1
 
 function getRandomNumber(){
     return 4; // chosen by fair dice roll.
               // guaranteed to be random.
 }
 
-/* A block comment before code */ var b = 2;
+/* A block comment before code */ const b = 2;
 
-var c = 3; /* A block comment after code */
+const c = 3; /* A block comment after code */
 ```
 
 :::
@@ -40,9 +40,9 @@ Examples of **correct** code for this rule:
 /*eslint no-inline-comments: "error"*/
 
 // This is a comment above a line of code
-var foo = 5;
+const foo = 5;
 
-var bar = 5;
+const bar = 5;
 //This is a comment below a line of code
 ```
 
@@ -54,14 +54,14 @@ Comments inside the curly braces in JSX are allowed to be on the same line as th
 
 Examples of **incorrect** code for this rule:
 
-::: incorrect { "ecmaFeatures": { "jsx": true } }
+::: incorrect { "parserOptions": { "ecmaFeatures": { "jsx": true } } }
 
 ```jsx
 /*eslint no-inline-comments: "error"*/
 
-var foo = <div>{ /* On the same line with other code */ }<h1>Some heading</h1></div>;
+const foo = <div>{ /* On the same line with other code */ }<h1>Some heading</h1></div>;
 
-var bar = (
+const bar = (
     <div>
     {   // These braces are not just for the comment, so it can't be on the same line
         baz
@@ -74,19 +74,19 @@ var bar = (
 
 Examples of **correct** code for this rule:
 
-::: correct { "ecmaFeatures": { "jsx": true } }
+::: correct { "parserOptions": { "ecmaFeatures": { "jsx": true } } }
 
 ```jsx
 /*eslint no-inline-comments: "error"*/
 
-var foo = (
+const foo = (
     <div>
       {/* These braces are just for this comment and there is nothing else on this line */}
       <h1>Some heading</h1>
     </div>
 )
 
-var bar = (
+const bar = (
     <div>
     {
         // There is nothing else on this line
@@ -95,7 +95,7 @@ var bar = (
     </div>
 );
 
-var quux = (
+const quux = (
     <div>
       {/*
         Multiline
@@ -133,7 +133,7 @@ Examples of **incorrect** code for the `ignorePattern` option:
 ```js
 /*eslint no-inline-comments: ["error", { "ignorePattern": "something" }] */
 
-var foo = 4; // other thing
+const foo = 4; // other thing
 ```
 
 :::

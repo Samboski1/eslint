@@ -3,9 +3,6 @@ title: global-require
 rule_type: suggestion
 ---
 
-
-This rule was **deprecated** in ESLint v7.0.0. Please use the corresponding rule in [`eslint-plugin-n`](https://github.com/eslint-community/eslint-plugin-n).
-
 In Node.js, module dependencies are included using the `require()` function, such as:
 
 ```js
@@ -36,7 +33,6 @@ Examples of **incorrect** code for this rule:
 
 ```js
 /*eslint global-require: "error"*/
-/*eslint-env es6*/
 
 // calling require() inside of a function is not allowed
 function readFile(filename, callback) {

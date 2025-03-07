@@ -5,9 +5,6 @@ further_reading:
 - https://kangax.github.io/compat-table/es5/#Reserved_words_as_property_names
 - https://mathiasbynens.be/notes/javascript-properties
 ---
-
-This rule was **deprecated** in ESLint v8.53.0. Please use the [corresponding rule](https://eslint.style/rules/js/quote-props) in [`@stylistic/eslint-plugin-js`](https://eslint.style/packages/js).
-
 Object literal property names can be defined in two ways: using literals or using strings. For example, these two objects are equivalent:
 
 ```js
@@ -83,7 +80,6 @@ Examples of **correct** code for this rule with the default `"always"` option:
 
 ```js
 /*eslint quote-props: ["error", "always"]*/
-/*eslint-env es6*/
 
 var object1 = {
     "foo": "bar",
@@ -131,7 +127,6 @@ Examples of **correct** code for this rule with the `"as-needed"` option:
 
 ```js
 /*eslint quote-props: ["error", "as-needed"]*/
-/*eslint-env es6*/
 
 var object1 = {
     "a-b": 0,

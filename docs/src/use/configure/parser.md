@@ -15,20 +15,21 @@ You can use custom parsers to convert JavaScript code into an abstract syntax tr
 
 ## Configure a Custom Parser
 
-In many cases, you can use the [default parser](https://github.com/eslint/espree) that ESLint ships with for parsing your JavaScript code. You can optionally override the default parser by using the `parser` property. The `parser` property must be an object that conforms to the [parser interface](../../extend/custom-parsers). For example, you can use the [`@babel/eslint-parser`](https://www.npmjs.com/package/@babel/eslint-parser) package to allow ESLint to parse experimental syntax:
+In many cases, you can use the [default parser](https://github.com/eslint/js/tree/main/packages/espree) that ESLint ships with for parsing your JavaScript code. You can optionally override the default parser by using the `parser` property. The `parser` property must be an object that conforms to the [parser interface](../../extend/custom-parsers). For example, you can use the [`@babel/eslint-parser`](https://www.npmjs.com/package/@babel/eslint-parser) package to allow ESLint to parse experimental syntax:
 
 ```js
 // eslint.config.js
 import babelParser from "@babel/eslint-parser";
+import { defineConfig } from "eslint/config";
 
-export default [
+export default defineConfig([
     {
         files: ["**/*.js", "**/*.mjs"],
         languageOptions: {
             parser: babelParser
         }
     }
-];
+]);
 ```
 
 This configuration ensures that the Babel parser, rather than the default Espree parser, is used to parse all files ending with `.js` and `.mjs`.
@@ -50,8 +51,9 @@ Parsers may accept options to alter the way they behave. The `languageOptions.pa
 ```js
 // eslint.config.js
 import babelParser from "@babel/eslint-parser";
+import { defineConfig } from "eslint/config";
 
-export default [
+export default defineConfig([
     {
         languageOptions: {
             parser: babelParser,
@@ -65,7 +67,7 @@ export default [
             }
         }
     }
-];
+]);
 ```
 
 ::: tip

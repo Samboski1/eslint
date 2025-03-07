@@ -49,7 +49,6 @@ Examples of **incorrect** code for this rule with the default `"always"` option:
 
 ```js
 /*eslint space-before-keywords: ["error", "always"]*/
-/*eslint-env es6*/
 
 if (foo) {
     // ...
@@ -68,11 +67,10 @@ function bar() {
 
 Examples of **correct** code for this rule with the default `"always"` option:
 
-::: correct { "ecmaFeatures": { "jsx": true } }
+::: correct { "parserOptions": { "ecmaFeatures": { "jsx": true } } }
 
 ```js
 /*eslint space-before-keywords: ["error", "always"]*/
-/*eslint-env es6*/
 
 if (foo) {
     // ...

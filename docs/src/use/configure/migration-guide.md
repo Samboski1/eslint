@@ -4,8 +4,11 @@ eleventyNavigation:
     key: migration guide
     parent: configure
     title: Configuration Migration Guide
-    order: 8
+    order: 9
 ---
+
+{%- from 'components/npm_tabs.macro.html' import npm_tabs with context %}
+{%- from 'components/npx_tabs.macro.html' import npx_tabs %}
 
 This guide provides an overview of how you can migrate your ESLint configuration file from the eslintrc format (typically configured in `.eslintrc.js` or `.eslintrc.json` files) to the new flat config format (typically configured in an `eslint.config.js` file).
 
@@ -16,9 +19,24 @@ For reference information on these configuration formats, refer to the following
 * [eslintrc configuration files](configuration-files-deprecated)
 * [flat configuration files](configuration-files)
 
+## Migrate Your Config File
+
+To get started, use the [configuration migrator](https://npmjs.com/package/@eslint/migrate-config) on your existing configuration file (`.eslintrc`, `.eslintrc.json`, `.eslintrc.yml`), like this:
+
+{{ npx_tabs({
+    package: null,
+    args: ["@eslint/migrate-config", ".eslintrc.json"]
+}) }}
+
+This will create a starting point for your `eslint.config.js` file but is not guaranteed to work immediately without further modification. It will, however, do most of the conversion work mentioned in this guide automatically.
+
+::: important
+The configuration migrator doesn't yet work well for `.eslintrc.js` files. If you are using `.eslintrc.js`, the migration results in a config file that matches the evaluated output of your configuration and won't include any functions, conditionals, or anything other than the raw data represented in your configuration.
+:::
+
 ## Start Using Flat Config Files
 
-Starting with ESLint v9.0.0, the flat config file format will be the default configuration file format. Once ESLint v9.0.0 is released, you can start using the flat config file format without any additional configuration.
+The flat config file format has been the default configuration file format since ESLint v9.0.0. You can start using the flat config file format without any additional configuration.
 
 To use flat config with ESLint v8, place a `eslint.config.js` file in the root of your project **or** set the `ESLINT_USE_FLAT_CONFIG` environment variable to `true`.
 
@@ -26,8 +44,8 @@ To use flat config with ESLint v8, place a `eslint.config.js` file in the root o
 
 While the configuration file format has changed from eslintrc to flat config, the following has stayed the same:
 
-* Syntax for configuring rules
-* Syntax for configuring processors
+* Syntax for configuring rules.
+* Syntax for configuring processors.
 * The CLI, except for the flag changes noted in [CLI Flag Changes](#cli-flag-changes).
 * Global variables are configured the same way, but on a different property (see [Configuring Language Options](#configuring-language-options)).
 
@@ -77,6 +95,10 @@ export default [
     }
 ];
 ```
+
+::: tip
+If you import a plugin and get an error such as "TypeError: context.getScope is not a function", then that means the plugin has not yet been updated to the ESLint v9.x rule API. While you should file an issue with the particular plugin, you can manually patch the plugin to work in ESLint v9.x using the [compatibility utilities](https://eslint.org/blog/2024/05/eslint-compatibility-utilities/).
+:::
 
 ### Custom Parsers
 
@@ -256,7 +278,7 @@ export default [
 ];
 ```
 
-A flag config example configuration supporting multiple configs for different glob patterns:
+A flat config example configuration supporting multiple configs for different glob patterns:
 
 ```javascript
 // eslint.config.js
@@ -296,6 +318,7 @@ For example, here's an eslintrc file with language options:
 module.exports = {
     env: {
         browser: true,
+        node: true
     },
     globals: {
         myCustomGlobal: "readonly",
@@ -322,6 +345,7 @@ export default [
             sourceType: "module",
             globals: {
                 ...globals.browser,
+                ...globals.node,
                 myCustomGlobal: "readonly"
             }
         }
@@ -329,6 +353,10 @@ export default [
     }
 ];
 ```
+
+::: tip
+You'll need to install the `globals` package from npm for this example to work. It is not automatically installed by ESLint.
+:::
 
 ### `eslint-env` Configuration Comments
 
@@ -393,16 +421,18 @@ export default [
 
 In eslintrc files, use the `extends` property to use predefined and shareable configs. ESLint comes with two predefined configs that you can access as strings:
 
-* `"eslint:recommended"`: the rules recommended by ESLint
-* `"eslint:all"`: all rules shipped with ESLint
+* `"eslint:recommended"`: the rules recommended by ESLint.
+* `"eslint:all"`: all rules shipped with ESLint.
 
 You can also use the `extends` property to extend a shareable config. Shareable configs can either be paths to local config files or npm package names.
 
 In flat config files, predefined configs are imported from separate modules into flat config files. The `recommended` and `all` rules configs are located in the [`@eslint/js`](https://www.npmjs.com/package/@eslint/js) package. You must import this package to use these configs:
 
-```shell
-npm install @eslint/js --save-dev
-```
+{{ npm_tabs({
+    command: "install",
+    packages: ["@eslint/js"],
+    args: ["--save-dev"]
+}) }}
 
 You can add each of these configs to the exported array or expose specific rules from them. You must import the modules for local config files and npm package configs with flat config.
 
@@ -479,9 +509,11 @@ export default [
 
 You may find that there's a shareable config you rely on that hasn't yet been updated to flat config format. In that case, you can use the `FlatCompat` utility to translate the eslintrc format into flat config format. First, install the `@eslint/eslintrc` package:
 
-```shell
-npm install @eslint/eslintrc --save-dev
-```
+{{ npm_tabs({
+    command: "install",
+    packages: ["@eslint/eslintrc"],
+    args: ["--save-dev"]
+}) }}
 
 Then, import `FlatCompat` and create a new instance to convert an existing eslintrc config. For example, if the npm package `eslint-config-my-config` is in eslintrc format, you can write this:
 
@@ -513,7 +545,7 @@ For more information about the `FlatCompat` class, please see the [package READM
 
 With eslintrc, you can make ESLint ignore files by creating a separate `.eslintignore` file in the root of your project. The `.eslintignore` file uses the same glob pattern syntax as `.gitignore` files. Alternatively, you can use an `ignorePatterns` property in your eslintrc file.
 
-To ignore files with flat config, you can use the `ignores` property in a config object. The `ignores` property accepts an array of glob patterns. Flat config does not support loading ignore patterns from `.eslintignore` files, so you'll need to migrate those patterns directly into flat config.
+To ignore files with flat config, you can use the `ignores` property in a config object with no other properties. The `ignores` property accepts an array of glob patterns. Flat config does not support loading ignore patterns from `.eslintignore` files, so you'll need to migrate those patterns directly into flat config.
 
 For example, here's a `.eslintignore` example you can use with an eslintrc config:
 
@@ -524,7 +556,7 @@ config/*
 # ...other ignored files
 ```
 
-`ignorePatterns` example:
+Here are the same patterns represented as `ignorePatterns` in a `.eslintrc.js` file:
 
 ```javascript
 // .eslintrc.js
@@ -534,22 +566,27 @@ module.exports = {
 };
 ```
 
-Here are the same files ignore patterns in flat config:
+The equivalent ignore patterns in flat config look like this:
 
 ```javascript
 export default [
     // ...other config
     {
+        // Note: there should be no other properties in this object
         ignores: ["**/temp.js", "config/*"]
     }
 ];
 ```
 
-Also, with flat config, dotfiles (e.g. `.dotfile.js`) are no longer ignored by default. If you want to ignore dotfiles, add files ignore pattern `"**/.*"`.
+In `.eslintignore`, `temp.js` ignores all files named `temp.js`, whereas in flat config, you need to specify this as `**/temp.js`. The pattern `temp.js` in flat config only ignores a file named `temp.js` in the same directory as the configuration file.
+
+::: important
+In flat config, dotfiles (e.g. `.dotfile.js`) are no longer ignored by default. If you want to ignore dotfiles, add an ignore pattern of `"**/.*"`.
+:::
 
 ### Linter Options
 
-ESlintrc files let you configure the linter itself with the `noInlineConfig` and `reportUnusedDisableDirectives` properties.
+Eslintrc files let you configure the linter itself with the `noInlineConfig` and `reportUnusedDisableDirectives` properties.
 
 The flat config system introduces a new top-level property `linterOptions` that you can use to configure the linter. In the `linterOptions` object, you can include `noInlineConfig` and `reportUnusedDisableDirectives`.
 
@@ -642,6 +679,12 @@ The `--resolve-plugins-relative-to` flag was used to indicate which directory pl
 
 With flat config, shareable configs can specify their dependencies directly, so this flag is no longer needed.
 
+### `package.json` Configuration No Longer Supported
+
+With eslintrc, it was possible to use a `package.json` file to configure ESLint using the `eslintConfig` key.
+
+With flat config, it's no longer possible to use a `package.json` file to configure ESLint. You'll need to move your configuration into a separate file.
+
 ### Additional Changes
 
 The following changes have been made from the eslintrc to the flat config file format:
@@ -652,9 +695,24 @@ The following changes have been made from the eslintrc to the flat config file f
 
 ## TypeScript Types for Flat Config Files
 
-You can see the TypeScript types for the flat config file format in the DefinitelyTyped project. The interface for the objects in the config’s array is called the `FlatConfig`.
+You can see the TypeScript types for the flat config file format in the [`lib/types` source folder on GitHub](https://github.com/eslint/eslint/tree/main/lib/types). The interface for the objects in the config’s array is called `Linter.Config`.
 
-You can view the type definitions in the [DefinitelyTyped repository on Github](https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/eslint/index.d.ts).
+You can view the type definitions in [`lib/types/index.d.ts`](https://github.com/eslint/eslint/blob/main/lib/types/index.d.ts).
+
+## Visual Studio Code Support
+
+ESLint v9.x support was added in the [`vscode-eslint`](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) v3.0.10.
+
+In versions of `vscode-eslint` prior to v3.0.10, the new configuration system is not enabled by default. To enable support for the new configuration files, edit your `.vscode/settings.json` file and add the following:
+
+```json
+{
+  // required in vscode-eslint < v3.0.10 only
+  "eslint.experimental.useFlatConfig": true
+}
+```
+
+In a future version of the ESLint plugin, you will no longer need to enable this manually.
 
 ## Further Reading
 
