@@ -1800,6 +1800,10 @@ export interface ESLintRules extends Linter.RulesRecord {
 					 * @default 3
 					 */
 					max: number;
+					/**
+					 * @default false
+					 */
+					countVoidThis: boolean;
 			  }>
 			| number,
 		]
@@ -3578,7 +3582,16 @@ export interface ESLintRules extends Linter.RulesRecord {
 	 * @since 0.1.4
 	 * @see https://eslint.org/docs/latest/rules/no-shadow-restricted-names
 	 */
-	"no-shadow-restricted-names": Linter.RuleEntry<[]>;
+	"no-shadow-restricted-names": Linter.RuleEntry<
+		[
+			Partial<{
+				/**
+				 * @default false
+				 */
+				reportGlobalThis: boolean;
+			}>,
+		]
+	>;
 
 	/**
 	 * Rule to disallow spacing between function identifiers and their applications (deprecated).
@@ -3700,6 +3713,13 @@ export interface ESLintRules extends Linter.RulesRecord {
 			}>,
 		]
 	>;
+
+	/**
+	 * Rule to disallow `let` or `var` variables that are read but never assigned.
+	 *
+	 * @see https://eslint.org/docs/latest/rules/no-unassigned-vars
+	 */
+	"no-unassigned-vars": Linter.RuleEntry<[]>;
 
 	/**
 	 * Rule to disallow the use of undeclared variables unless mentioned in \/*global *\/ comments.

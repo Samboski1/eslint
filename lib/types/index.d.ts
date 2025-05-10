@@ -1560,9 +1560,16 @@ export namespace Linter {
 	/**
 	 * Parser options.
 	 *
-	 * @see [Specifying Parser Options](https://eslint.org/docs/latest/use/configure/language-options-deprecated#specifying-parser-options)
+	 * @see [Specifying Parser Options](https://eslint.org/docs/latest/use/configure/language-options#specifying-parser-options)
 	 */
 	interface ParserOptions {
+		/**
+		 * Allow the use of reserved words as identifiers (if `ecmaVersion` is 3).
+		 *
+		 * @default false
+		 */
+		allowReserved?: boolean | undefined;
+
 		/**
 		 * Accepts any valid ECMAScript version number or `'latest'`:
 		 *
@@ -1661,8 +1668,8 @@ export namespace Linter {
 		messages: LintMessage[];
 	}
 
-	// Temporarily loosen type for just flat config files (see #68232)
-	type NonESTreeParser = Omit<ESTreeParser, "parseForESLint"> &
+	// Temporarily loosen type for just flat config files (see https://github.com/DefinitelyTyped/DefinitelyTyped/pull/68232)
+	type NonESTreeParser = ESLint.ObjectMetaProperties &
 		(
 			| {
 					parse(text: string, options?: any): unknown;
@@ -1687,9 +1694,16 @@ export namespace Linter {
 	type Parser = NonESTreeParser | ESTreeParser;
 
 	interface ESLintParseResult {
+		/** The AST object. */
 		ast: AST.Program;
-		parserServices?: SourceCode.ParserServices | undefined;
+
+		/** The services that the parser provides. */
+		services?: SourceCode.ParserServices | undefined;
+
+		/** The scope manager of the AST. */
 		scopeManager?: Scope.ScopeManager | undefined;
+
+		/** The visitor keys of the AST. */
 		visitorKeys?: SourceCode.VisitorKeys | undefined;
 	}
 
@@ -2057,9 +2071,25 @@ export namespace ESLint {
 		};
 	}
 
+	/**
+	 * Information about deprecated rules.
+	 */
 	interface DeprecatedRuleUse {
+		/**
+		 * The rule ID.
+		 */
 		ruleId: string;
+
+		/**
+		 * The rule IDs that replace this deprecated rule.
+		 */
 		replacedBy: string[];
+
+		/**
+		 * The raw deprecated info provided by the rule.
+		 * Unset if the rule's `meta.deprecated` property is a boolean.
+		 */
+		info?: DeprecatedInfo;
 	}
 
 	interface ResultsMeta {
