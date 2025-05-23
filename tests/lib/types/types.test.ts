@@ -945,6 +945,16 @@ linter.verify(
 	},
 	"test.js",
 );
+linter.verify(
+	SOURCE,
+	{
+		parserOptions: {
+			ecmaVersion: 3,
+			allowReserved: true,
+		},
+	},
+	"test.js",
+);
 linter.verify(SOURCE, { env: { node: true } }, "test.js");
 linter.verify(SOURCE, { globals: { foo: true } }, "test.js");
 linter.verify(SOURCE, { globals: { foo: "off" } }, "test.js");
@@ -1073,11 +1083,11 @@ linter.defineParser("custom-parser", {
 		name: "foo",
 		version: "1.2.3",
 	},
-	parseForESLint(src, opts) {
+	parseForESLint(src, opts): Linter.ESLintParseResult {
 		return {
 			ast: AST,
 			visitorKeys: {},
-			parserServices: {},
+			services: {},
 			scopeManager,
 		};
 	},
@@ -1336,6 +1346,16 @@ linterWithEslintrcConfig.verify(
 		parserOptions: {
 			ecmaVersion: 6,
 			ecmaFeatures: { experimentalObjectRestSpread: true },
+		},
+	},
+	"test.js",
+);
+linterWithEslintrcConfig.verify(
+	SOURCE,
+	{
+		parserOptions: {
+			ecmaVersion: 3,
+			allowReserved: true,
 		},
 	},
 	"test.js",
@@ -1773,6 +1793,20 @@ for (const result of results) {
 		},
 	};
 	delete result.stats;
+
+	const deprecatedRule = result.usedDeprecatedRules[0];
+	deprecatedRule.ruleId = "foo";
+	deprecatedRule.replacedBy = ["bar"];
+	deprecatedRule.info = {
+		message: "use bar instead",
+		replacedBy: [
+			{
+				rule: {
+					name: "bar",
+				},
+			},
+		],
+	};
 
 	for (const message of result.messages) {
 		message.ruleId = "foo";
