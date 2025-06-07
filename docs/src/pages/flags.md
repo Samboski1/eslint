@@ -82,6 +82,16 @@ On the command line, you can specify feature flags using the `--flag` option. Yo
     args: ["--flag", "flag_one", "--flag", "flag_two", "file.js"]
 }) }}
 
+### Enable Feature Flags with Environment Variables
+
+You can also set feature flags using the `ESLINT_FLAGS` environment variable. Multiple flags can be specified as a comma-separated list and are merged with any flags passed on the CLI or in the API. For example, here's how you can add feature flags to your `.bashrc` or `.bash_profile` files:
+
+```bash
+export ESLINT_FLAGS="flag_one,flag_two"
+```
+
+This approach is especially useful in CI/CD pipelines or when you want to enable the same flags across multiple ESLint commands.
+
 ### Enable Feature Flags with the API
 
 When using the API, you can pass a `flags` array to both the `ESLint` and `Linter` classes:
@@ -98,9 +108,13 @@ const linter = new Linter({
 });
 ```
 
+::: tip
+The `ESLint` class also reads the `ESLINT_FLAGS` environment variable to set flags.
+:::
+
 ### Enable Feature Flags in VS Code
 
-To enable flags in the VS Code ESLint Extension for the editor, specify the flags you'd like in the `eslint.options` setting in your `settings.json` file:
+To enable flags in the VS Code ESLint Extension for the editor, specify the flags you'd like in the `eslint.options` setting in your [`settings.json`](https://code.visualstudio.com/docs/configure/settings#_settings-json-file) file:
 
 ```json
 {

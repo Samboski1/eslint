@@ -15,7 +15,7 @@ While ESLint is designed to be run on the command line, it's possible to use ESL
 
 The `ESLint` class is the primary class to use in Node.js applications.
 
-This class depends on the Node.js `fs` module and the file system, so you cannot use it in browsers. If you want to lint code on browsers, use the [Linter](#linter) class instead.
+This class depends on the Node.js [`fs`](https://nodejs.org/api/fs.html) module and the file system, so you cannot use it in browsers. If you want to lint code on browsers, use the [`Linter`](#linter) class instead.
 
 Here's a simple example of using the `ESLint` class:
 
@@ -68,7 +68,7 @@ const { ESLint } = require("eslint");
 });
 ```
 
-And here is an example of using the `ESLint` class with `lintText` API:
+And here is an example of using the `ESLint` class with [`lintText`](#-eslintlinttextcode-options) API:
 
 ```js
 const { ESLint } = require("eslint");
@@ -140,9 +140,9 @@ The `ESLint` constructor takes an `options` object. If you omit the `options` ob
 
 - `options.allowInlineConfig` (`boolean`)<br>
   Default is `true`. If `false` is present, ESLint suppresses directive comments in source code. If this option is `false`, it overrides the `noInlineConfig` setting in your configurations.
-- `options.baseConfig` (`ConfigData | ConfigData[] | null`)<br>
+- `options.baseConfig` (`Config | Config[] | null`)<br>
   Default is `null`. [Configuration object], extended by all configurations used with this instance. You can use this option to define the default settings that will be used if your configuration files don't configure it.
-- `options.overrideConfig` (`ConfigData | ConfigData[] | null`)<br>
+- `options.overrideConfig` (`Config | Config[] | null`)<br>
   Default is `null`. [Configuration object], added after any existing configuration and therefore applies after what's contained in your configuration file (if used).
 - `options.overrideConfigFile` (`null | true | string`)<br>
   Default is `null`. By default, ESLint searches for a configuration file. When this option is set to `true`, ESLint does not search for a configuration file. When this option is set to a `string` value, ESLint does not search for a configuration file, and uses the provided value as the path to the configuration file.
@@ -672,7 +672,7 @@ The information available for each linting message is:
 - `line` - the line on which the error occurred.
 - `message` - the message that should be output.
 - `messageId` - the ID of the message used to generate the message (this property is omitted if the rule does not use message IDs).
-- `nodeType` - (**Deprecated:** This property will be removed in a future version of ESLint.) the node or token type that was reported with the problem.
+- `nodeType` - (**Deprecated:** This property will be removed in a future version of ESLint.) the node, comment, or token type that was reported with the problem.
 - `ruleId` - the ID of the rule that triggered the messages (or null if `fatal` is true).
 - `severity` - either 1 or 2, depending on your configuration.
 - `endColumn` - the end column of the range on which the error occurred (this property is omitted if it's not range).
