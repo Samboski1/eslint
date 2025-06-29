@@ -35,6 +35,7 @@ import {
 	RuleTester,
 	Scope,
 	SourceCode,
+	JSSyntaxElement,
 } from "eslint";
 import { defineConfig, globalIgnores } from "eslint/config";
 import { ESLintRules } from "eslint/rules";
@@ -149,9 +150,9 @@ sourceCode.getFirstToken(AST, { includeComments: true }); // $ExpectType Comment
 sourceCode.getFirstToken(AST, { includeComments: true, skip: 0 });
 // prettier-ignore
 sourceCode.getFirstToken(AST, { // $ExpectType (Token & { type: "Identifier"; }) | null
-    includeComments: true,
-    skip: 0,
-    filter: (t): t is AST.Token & { type: "Identifier" } => t.type === "Identifier",
+	includeComments: true,
+	skip: 0,
+	filter: (t): t is AST.Token & { type: "Identifier" } => t.type === "Identifier",
 });
 
 sourceCode.getFirstTokens(AST); // $ExpectType Token[]
@@ -169,16 +170,16 @@ sourceCode.getFirstTokens(AST, {
 });
 // prettier-ignore
 sourceCode.getFirstTokens(AST, { // $ExpectType (Token & { type: "Identifier"; })[]
-    count: 0,
-    filter: (t): t is AST.Token & { type: "Identifier" } => t.type === "Identifier",
+	count: 0,
+	filter: (t): t is AST.Token & { type: "Identifier" } => t.type === "Identifier",
 });
 sourceCode.getFirstTokens(AST, { includeComments: true }); //  $ ExpectType (Comment | Token)[]
 sourceCode.getFirstTokens(AST, { includeComments: true, count: 0 }); //  $ ExpectType (Comment | Token)[]
 // prettier-ignore
 sourceCode.getFirstTokens(AST, { // $ExpectType (Token & { type: "Identifier"; })[]
-    includeComments: true,
-    count: 0,
-    filter: (t): t is AST.Token & { type: "Identifier" } => t.type === "Identifier",
+	includeComments: true,
+	count: 0,
+	filter: (t): t is AST.Token & { type: "Identifier" } => t.type === "Identifier",
 });
 
 sourceCode.getLastToken(AST);
@@ -302,7 +303,7 @@ sourceCode.getFirstTokenBetween(
 );
 // prettier-ignore
 sourceCode.getFirstTokenBetween(AST, AST, { // $ExpectType (Token & { type: "Identifier"; }) | null
-    filter: (t): t is AST.Token & { type: "Identifier" } => t.type === "Identifier",
+	filter: (t): t is AST.Token & { type: "Identifier" } => t.type === "Identifier",
 });
 sourceCode.getFirstTokenBetween(AST, AST, {
 	skip: 0,
@@ -313,9 +314,9 @@ sourceCode.getFirstTokenBetween(AST, AST, { includeComments: true }); // $Expect
 sourceCode.getFirstTokenBetween(AST, AST, { includeComments: true, skip: 0 });
 // prettier-ignore
 sourceCode.getFirstTokenBetween(AST, AST, { // $ExpectType (Token & { type: "Identifier"; }) | null
-    includeComments: true,
-    skip: 0,
-    filter: (t): t is AST.Token & { type: "Identifier" } => t.type === "Identifier",
+	includeComments: true,
+	skip: 0,
+	filter: (t): t is AST.Token & { type: "Identifier" } => t.type === "Identifier",
 });
 
 sourceCode.getFirstTokensBetween(AST, AST); // $ExpectType Token[]
@@ -329,7 +330,7 @@ sourceCode.getFirstTokensBetween(
 );
 // prettier-ignore
 sourceCode.getFirstTokensBetween(AST, AST, { // $ExpectType (Token & { type: "Identifier"; })[]
-    filter: (t): t is AST.Token & { type: "Identifier" } => t.type === "Identifier",
+	filter: (t): t is AST.Token & { type: "Identifier" } => t.type === "Identifier",
 });
 sourceCode.getFirstTokensBetween(AST, AST, {
 	count: 0,
@@ -339,9 +340,9 @@ sourceCode.getFirstTokensBetween(AST, AST, { includeComments: true }); // $Expec
 sourceCode.getFirstTokensBetween(AST, AST, { includeComments: true, count: 0 });
 // prettier-ignore
 sourceCode.getFirstTokensBetween(AST, AST, { // $ExpectType (Token & { type: "Identifier"; })[]
-    includeComments: true,
-    count: 0,
-    filter: (t): t is AST.Token & { type: "Identifier" } => t.type === "Identifier",
+	includeComments: true,
+	count: 0,
+	filter: (t): t is AST.Token & { type: "Identifier" } => t.type === "Identifier",
 });
 
 sourceCode.getLastTokenBetween(AST, AST);
@@ -401,8 +402,8 @@ sourceCode.getTokens(AST, {
 sourceCode.getTokens(AST, { includeComments: true }); // $ExpectType (Comment | Token)[]
 // prettier-ignore
 sourceCode.getTokens(AST, { // $ExpectType (Token & { type: "Identifier"; })[]
-    includeComments: true,
-    filter: (t): t is AST.Token & { type: "Identifier" } => t.type === "Identifier",
+	includeComments: true,
+	filter: (t): t is AST.Token & { type: "Identifier" } => t.type === "Identifier",
 });
 
 sourceCode.commentsExistBetween(AST, AST);
@@ -929,6 +930,7 @@ linter.verify(SOURCE, { parserOptions: { ecmaVersion: 2022 } }, "test.js");
 linter.verify(SOURCE, { parserOptions: { ecmaVersion: 2023 } }, "test.js");
 linter.verify(SOURCE, { parserOptions: { ecmaVersion: 2024 } }, "test.js");
 linter.verify(SOURCE, { parserOptions: { ecmaVersion: 2025 } }, "test.js");
+linter.verify(SOURCE, { parserOptions: { ecmaVersion: 2026 } }, "test.js");
 linter.verify(SOURCE, { parserOptions: { ecmaVersion: "latest" } }, "test.js");
 linter.verify(
 	SOURCE,
@@ -941,6 +943,16 @@ linter.verify(
 		parserOptions: {
 			ecmaVersion: 6,
 			ecmaFeatures: { experimentalObjectRestSpread: true },
+		},
+	},
+	"test.js",
+);
+linter.verify(
+	SOURCE,
+	{
+		parserOptions: {
+			ecmaVersion: 3,
+			allowReserved: true,
 		},
 	},
 	"test.js",
@@ -1073,11 +1085,11 @@ linter.defineParser("custom-parser", {
 		name: "foo",
 		version: "1.2.3",
 	},
-	parseForESLint(src, opts) {
+	parseForESLint(src, opts): Linter.ESLintParseResult {
 		return {
 			ast: AST,
 			visitorKeys: {},
-			parserServices: {},
+			services: {},
 			scopeManager,
 		};
 	},
@@ -1138,6 +1150,11 @@ linterWithFlatConfig.verify(SOURCE, [{}], {
 linterWithFlatConfig.verify(SOURCE, [{}], {
 	postprocess: problemList => problemList[0],
 });
+linterWithFlatConfig.verify(SOURCE, [{}], {
+	filterCodeBlock(filename) {
+		return filename.endsWith(".js");
+	},
+});
 
 linterWithFlatConfig.verify(
 	SOURCE,
@@ -1162,6 +1179,11 @@ linterWithFlatConfig.verify(
 linterWithFlatConfig.verify(
 	SOURCE,
 	[{ languageOptions: { ecmaVersion: 2025 } }],
+	"test.js",
+);
+linterWithFlatConfig.verify(
+	SOURCE,
+	[{ languageOptions: { ecmaVersion: 2026 } }],
 	"test.js",
 );
 linterWithFlatConfig.verify(
@@ -1263,6 +1285,15 @@ linterWithFlatConfig.verifyAndFix(
 	{ linterOptions: {} },
 	{ filename: "test.js" },
 );
+linterWithFlatConfig.verifyAndFix(
+	SOURCE,
+	{ linterOptions: {} },
+	{
+		filterCodeBlock(filename) {
+			return filename.endsWith(".js");
+		},
+	},
+);
 
 // #endregion Linter with flat config
 
@@ -1322,6 +1353,11 @@ linterWithEslintrcConfig.verify(
 );
 linterWithEslintrcConfig.verify(
 	SOURCE,
+	{ parserOptions: { ecmaVersion: 2026 } },
+	"test.js",
+);
+linterWithEslintrcConfig.verify(
+	SOURCE,
 	{ parserOptions: { ecmaVersion: "latest" } },
 	"test.js",
 );
@@ -1336,6 +1372,16 @@ linterWithEslintrcConfig.verify(
 		parserOptions: {
 			ecmaVersion: 6,
 			ecmaFeatures: { experimentalObjectRestSpread: true },
+		},
+	},
+	"test.js",
+);
+linterWithEslintrcConfig.verify(
+	SOURCE,
+	{
+		parserOptions: {
+			ecmaVersion: 3,
+			allowReserved: true,
 		},
 	},
 	"test.js",
@@ -1774,6 +1820,20 @@ for (const result of results) {
 	};
 	delete result.stats;
 
+	const deprecatedRule = result.usedDeprecatedRules[0];
+	deprecatedRule.ruleId = "foo";
+	deprecatedRule.replacedBy = ["bar"];
+	deprecatedRule.info = {
+		message: "use bar instead",
+		replacedBy: [
+			{
+				rule: {
+					name: "bar",
+				},
+			},
+		],
+	};
+
 	for (const message of result.messages) {
 		message.ruleId = "foo";
 	}
@@ -2019,6 +2079,23 @@ ruleTester.run("simple-valid-test", rule2, {
 
 (): Linter.Config => ({ name: "eslint:js" });
 
+(): Linter.Config => ({ basePath: "subdir" });
+
+(): Linter.Config => ({
+	// @ts-expect-error
+	basePath: null,
+});
+
+(): Linter.Config => ({
+	// @ts-expect-error
+	basePath: 42,
+});
+
+(): Linter.Config => ({
+	// @ts-expect-error
+	basePath: {},
+});
+
 // @ts-expect-error // Generic passed in does not match the RuleEntry schema
 (): Linter.Config<{ foo?: "bar" }> => ({
 	rules: {},
@@ -2100,6 +2177,12 @@ let flatConfig!: Linter.FlatConfig;
 config = flatConfig;
 flatConfig = config;
 
+let configWithRules!: Linter.Config<ESLintRules>;
+let flatConfigWithRules!: Linter.FlatConfig<ESLintRules>;
+configWithRules = flatConfigWithRules;
+flatConfigWithRules = configWithRules;
+flatConfigWithRules.rules; // $ExpectType Partial<ESLintRules> | undefined
+
 // #endregion Config
 
 // #region Plugins
@@ -2168,3 +2251,40 @@ defineConfig([
 ]);
 
 // #endregion
+
+// #region JSSyntaxElement
+
+const fooRule1: Rule.RuleModule = {
+	create(context) {
+		return {
+			Program(node) {
+				for (const comment of node.comments ?? []) {
+					context.report({
+						node: comment,
+						messageId: "foo",
+					});
+				}
+			},
+		};
+	},
+};
+
+const fooRule2: JSRuleDefinition = {
+	create(context) {
+		return {
+			Program(node) {
+				for (const comment of node.comments ?? []) {
+					context.report({
+						node: comment,
+						messageId: "foo",
+					});
+				}
+			},
+		};
+	},
+};
+
+const SYNTAX_ELEMENT_COMMENT: JSSyntaxElement = COMMENT;
+const SYNTAX_ELEMENT_TOKEN: JSSyntaxElement = TOKEN;
+
+// #endregion JSSyntaxElement
